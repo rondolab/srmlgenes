@@ -3,82 +3,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-import plotly.graph_objects as go
-import pandas as pd
-import numpy as np
-from functools import lru_cache
+from heatmaps_data import heatmap_figure, load_sim_data
 
-sim_data_template = "~/genecad/04_dominance/genedose/simulation_inference_{likelihood}/{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv"
-exac_sumstats = pd.read_table("/hpc/users/jordad05/genecad/04_dominance/genedose/ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
-func_length_tables = {}
-for func in 'LOF_probably', 'synon':
-    func_length_tables[func] = exac_sumstats.loc[exac_sumstats.func == func, "L"]\
-                                            .transform('log10')\
-                                            .round(1)\
-                                            .clip(2.0, 5.0)\
-                                            .value_counts()
-
-def format_heatmap_sims(df):
-    ml_bin_names = df.transpose().drop("L").idxmax()
-    split_names = ml_bin_names.str.split("_")
-    ml_s = split_names.str.get(0)
-    ml_h = split_names.str.get(1)
-    crosstab = pd.crosstab(ml_h, ml_s)
-    counts_grid = crosstab.reindex(["0.0", "0.1", "0.3", "0.5"], fill_value=0, axis=0)\
-                          .reindex(["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"], fill_value=0, axis=1)\
-                          .values.tolist()
-    for h_index in 0, 1, 2:
-        counts_grid[h_index][0] = None
-    return counts_grid
-
-
-@lru_cache(maxsize=None)
-def load_sim_data(likelihood, ref, sim, s, h, L):
-    if L in func_length_tables:
-        sims_to_concat = []
-        for l, count in func_length_tables[L].iteritems():
-            sims_to_concat.append(pd.read_table(sim_data_template.format(likelihood=likelihood,
-                                                                         ref=ref,
-                                                                         sim=sim,
-                                                                         s=s,
-                                                                         h=h,
-                                                                         L=l),
-                                                nrows=count))
-        df = pd.concat(sims_to_concat, ignore_index=True)
-    else:
-        df = pd.read_table(sim_data_template.format(likelihood=likelihood,
-                                                    ref=ref,
-                                                    sim=sim,
-                                                    s=s, h=h, L=L))
-    return format_heatmap_sims(df)
-
-
-def heatmap_figure(heatmap_data):
-    total_genes = np.nansum(np.array(heatmap_data, dtype=float))
-    fig = go.Figure(data=go.Heatmap(
-                        z=heatmap_data,
-                        x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
-                        y=["0.0", "0.1", "0.3", "0.5"],
-                        hoverongaps=False,
-                        hovertemplate="h: %%{y}<br />s: %%{x}<br />genes: %%{z}/%d<extra></extra>" % total_genes),
-                    layout=go.Layout(width=800, height=600,
-                xaxis_type='category', yaxis_type='category'))
-    return fig
-
-def heatmap_figure(heatmap_data):
-    heatmap_data = np.array(heatmap_data, dtype=float)
-    total_genes = np.nansum(heatmap_data)
-    percent = np.round(heatmap_data / total_genes * 100, 1)
-    fig = go.Figure(data=go.Heatmap(
-                        z=heatmap_data,
-                        x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
-                        y=["0.0", "0.1", "0.3", "0.5"],
-                        customdata=percent,
-                        hoverongaps=False,
-                        hovertemplate=f"h: %{{y}}<br />s: %{{x}}<br />genes: %{{z}}/{total_genes:0.0f} (%{{customdata}}%)<extra></extra>"),
-                    layout=go.Layout(width=800, height=600,
-                xaxis_type='category', yaxis_type='category'))
-    return fig
 
 def make_heatmap(likelihood, ref, sim, s, h, L):
     data = load_sim_data(likelihood, ref, sim, s, h, L)
