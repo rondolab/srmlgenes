@@ -6,15 +6,15 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from heatmaps_data import load_exac_data, heatmap_figure
+from heatmaps_common import load_exac_data, heatmap_figure, create_app
+
 
 def make_heatmap(likelihood, demography, func, genelist, min_L, max_L):
     data = load_exac_data(likelihood, demography, func, genelist, min_L, max_L)
     return heatmap_figure(data)
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
-                requests_pathname_prefix="/" + os.path.relpath(__file__, "/hpc/web/users.hpc.mssm.edu") + "/")
+
+app = create_app()
 
 app.layout = html.Div(children=[
                 dcc.Graph(id='heatmap', style={'height': '600px'}),
@@ -56,8 +56,6 @@ application = app.server
 def update_heatmap(likelihood, demography, func, geneset, Ls):
     return make_heatmap(likelihood, demography, func, geneset, Ls[0], Ls[1])
 
-if "dev" in __file__:
-    app.enable_dev_tools(debug=True)
 
 if __name__ == "__main__":
     app.run_server(debug=True)

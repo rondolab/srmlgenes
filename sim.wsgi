@@ -6,7 +6,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-from heatmaps_data import heatmap_figure, load_sim_data
+from heatmaps_common import heatmap_figure, load_sim_data, create_app
 
 
 def make_heatmap(likelihood, ref, sim, s, h, L):
@@ -14,9 +14,7 @@ def make_heatmap(likelihood, ref, sim, s, h, L):
     return heatmap_figure(data)
 
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
-                requests_pathname_prefix="/~jordad05/heatmaps/sim.wsgi/")
+app = create_app()
 
 app.layout = html.Div(children=[
                 dcc.Graph(id='heatmap', style={'height': '600px'}),
