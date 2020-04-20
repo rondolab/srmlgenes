@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.dirname(__file__))
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html

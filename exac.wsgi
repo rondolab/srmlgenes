@@ -1,4 +1,6 @@
-import os
+import sys, os
+sys.path.append(os.path.dirname(__file__))
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -10,10 +12,9 @@ def make_heatmap(likelihood, demography, func, genelist, min_L, max_L):
     data = load_exac_data(likelihood, demography, func, genelist, min_L, max_L)
     return heatmap_figure(data)
 
-
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
-                requests_pathname_prefix="/~jordad05/heatmaps/exac.wsgi/")
+                requests_pathname_prefix="/" + os.path.relpath(__file__, "/hpc/web/users.hpc.mssm.edu") + "/")
 
 app.layout = html.Div(children=[
                 dcc.Graph(id='heatmap', style={'height': '600px'}),
@@ -55,6 +56,8 @@ application = app.server
 def update_heatmap(likelihood, demography, func, geneset, Ls):
     return make_heatmap(likelihood, demography, func, geneset, Ls[0], Ls[1])
 
+if "dev" in __file__:
+    app.enable_dev_tools(debug=True)
 
 if __name__ == "__main__":
     app.run_server(debug=True)
