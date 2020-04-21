@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from plotly import graph_objects as go
 import dash
+import dash_core_components as dcc
+import dash_html_components as html
 
 SIM_DATA_TEMPLATE = "~/genecad/04_dominance/genedose/simulation_inference_{likelihood}/{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv"
 EXAC_SUMSTATS_TABLE = pd.read_table("/hpc/users/jordad05/genecad/04_dominance/genedose/ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
@@ -138,3 +140,23 @@ def create_app(app_filename):
     if "dev" in __file__:
         app.enable_dev_tools(debug=True)
     return app
+
+def gene_select_controls():
+    return [
+        dcc.Dropdown(id="geneset-dropdown",
+                     options=[{'label': 'All genes', 'value': 'all'},
+                              {'label': 'HI > 80%', 'value': 'haplo_Hurles_80'},
+                              {'label': 'CGD AD', 'value': 'CGD_AD'},
+                              {'label': 'Inbred', 'value': 'inbred_ALL'},
+                              {'label': 'HI < 20%', 'value': 'haplo_Hurles_low20'},
+                              {'label': 'CGD AR', 'value': 'CGD_AR'}],
+                     value='all', style={'width': '7em', 'display': 'inline-block'}),
+        dcc.Dropdown(id="func-dropdown",
+                     options=[{'label': "LOF + PolyPhen probably", 'value': 'LOF_probably'},
+                              {'label': "synonymous", 'value': 'synon'}],
+                     value="LOF_probably", style={'width': '15em', 'display': 'inline-block'}),
+        html.Label("L"), dcc.RangeSlider(id="L-slider", min=0, max=6, step=0.1,
+                                     marks={0: '10⁰', 1: '10¹', 2: '10²', 3: '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
+                                     value=[2, 5],
+                                     tooltip={'always_visible': False})
+    ]

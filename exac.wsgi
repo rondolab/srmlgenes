@@ -1,12 +1,11 @@
 import sys, os
 sys.path.append(os.path.dirname(__file__))
 
-import dash
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from heatmaps_common import load_exac_data, heatmap_figure, create_app
+from heatmaps_common import load_exac_data, heatmap_figure, create_app, gene_select_controls
 
 
 def make_heatmap(likelihood, demography, func, genelist, min_L, max_L):
@@ -18,14 +17,6 @@ app = create_app(__file__)
 
 app.layout = html.Div(children=[
                 dcc.Graph(id='heatmap', style={'height': '600px'}),
-                dcc.Dropdown(id="geneset-dropdown",
-                             options=[{'label': 'All genes', 'value': 'all'},
-                                      {'label': 'HI > 80%', 'value': 'haplo_Hurles_80'},
-                                      {'label': 'CGD AD', 'value': 'CGD_AD'},
-                                      {'label': 'Inbred', 'value': 'inbred_ALL'},
-                                      {'label': 'HI < 20%', 'value': 'haplo_Hurles_low20'},
-                                      {'label': 'CGD AR', 'value': 'CGD_AR'}],
-                             value='all', style={'width': '7em', 'display': 'inline-block'}),
                 dcc.Dropdown(id="likelihood-dropdown",
                              options=[{'label': 'PRF', 'value': 'prf'},
                                       {'label': 'KDE (nearest)', 'value': 'kde_nearest'},
@@ -34,16 +25,8 @@ app.layout = html.Div(children=[
                 dcc.Dropdown(id="demography-dropdown",
                              options=[{'label': 'Tennessen reference', 'value': 'tennessen'},
                                       {'label': 'Super-Tennessen reference', 'value': 'supertennessen'}],
-                             value='tennessen', style={'width': '15em', 'display': 'inline-block'}),
-                dcc.Dropdown(id="func-dropdown",
-                             options=[{'label': "LOF + PolyPhen probably", 'value': 'LOF_probably'},
-                                      {'label': "synonymous", 'value': 'synon'}],
-                             value="LOF_probably", style={'width': '15em', 'display': 'inline-block'}),
-                html.Label("L"), dcc.RangeSlider(id="L-slider", min=0, max=6, step=0.1,
-                    marks={0: '10⁰', 1: '10¹', 2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
-                                            value=[2,5],
-                                            tooltip={'always_visible' : False})
-                ], style={'width': '800px'})
+                             value='tennessen', style={'width': '15em', 'display': 'inline-block'})] +\
+                gene_select_controls(), style={'width': '800px'})
 application = app.server
 
 
