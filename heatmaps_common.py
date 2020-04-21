@@ -4,8 +4,9 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 from plotly import graph_objects as go
+import dash
 
-SIM_DATA_TEMPLATE = "~/genecad/04_dominance/genedoses/simulation_inference_{likelihood}/{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv"
+SIM_DATA_TEMPLATE = "~/genecad/04_dominance/genedose/simulation_inference_{likelihood}/{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv"
 EXAC_SUMSTATS_TABLE = pd.read_table("/hpc/users/jordad05/genecad/04_dominance/genedose/ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
 
 FUNC_LENGTH_TABLES = {}
@@ -130,10 +131,10 @@ def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
     return format_heatmap_empirical(filtered_df)
 
 
-def create_app():
+def create_app(app_filename):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
-                    requests_pathname_prefix="/" + os.path.relpath(__file__, "/hpc/web/users.hpc.mssm.edu") + "/")
+                    requests_pathname_prefix="/" + os.path.relpath(app_filename, "/hpc/web/users.hpc.mssm.edu") + "/")
     if "dev" in __file__:
         app.enable_dev_tools(debug=True)
     return app

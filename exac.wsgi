@@ -14,7 +14,7 @@ def make_heatmap(likelihood, demography, func, genelist, min_L, max_L):
     return heatmap_figure(data)
 
 
-app = create_app()
+app = create_app(__file__)
 
 app.layout = html.Div(children=[
                 dcc.Graph(id='heatmap', style={'height': '600px'}),
