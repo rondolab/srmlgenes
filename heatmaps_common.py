@@ -133,9 +133,9 @@ def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
     return format_heatmap_empirical(filtered_df)
 
 
-def create_app(app_filename):
+def create_app(app_name, app_filename):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-    app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
+    app = dash.Dash(app_name, external_stylesheets=external_stylesheets,
                     requests_pathname_prefix="/" + os.path.relpath(app_filename, "/hpc/web/users.hpc.mssm.edu") + "/")
     if "dev" in __file__:
         app.enable_dev_tools(debug=True)
