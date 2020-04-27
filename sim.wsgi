@@ -6,7 +6,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-from heatmaps_common import heatmap_figure, load_sim_data, create_app
+from heatmaps_common import heatmap_figure, load_sim_data, create_app, gene_select_controls
 
 
 def make_heatmap(likelihood, ref, sim, s, h, L):
@@ -41,20 +41,27 @@ app.layout = html.Div(children=[
                 #    marks={0: 'synon', 1: 'LOF_probably', 
                 #           2: '100', 3: '300', 4: '1000', 5: '3000', 6: '10000' },
                 #                            value=1)
-                #html.Label("L"), html.RadioItems(id="L-select-style",
-                #    options=[{'label': "Empirical gene set", 'value': 'empirical'},
-                #             {'label': "Single length", 'value': 'single'}, value='single'] 
-                # html.Div(id="L-select")
-                dcc.Slider(id="L-slider", min=2, max=5, step=0.1,
-                    marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
-                                            value=3,
-                                            tooltip={'always_visible' : False})
+                html.Label("L"), html.RadioItems(id="L-select-style",
+                    options=[{'label': "Empirical gene set", 'value': 'empirical'},
+                             {'label': "Single length", 'value': 'single'}], value='single'),
+                html.Div(id="L-select")
                 ], style={'width': '800px'})
 application = app.server
 
-#@app.callback(Output('L-select', 'children'),
-#              [Input('L-select-style', 'value')])
-#def choose_L_selector(
+
+@app.callback(Output('L-select', 'children'),
+              [Input('L-select-style', 'value')])
+def choose_L_selector(l_select_style):
+    if l_select_style == "empirical":
+        return gene_select_controls()
+    elif l_select_style == "single":
+        return dcc.Slider(id="L-slider", min=2, max=5, step=0.1,
+                    marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
+                                            value=3,
+                                            tooltip={'always_visible' : False})
+    else:
+        raise ValueError(f"Unrecognized L selection style {l_select_style}")
+
 
 @app.callback([Output('h-slider', 'value'), Output('h-slider', 'disabled')],
               [Input('s-slider', 'value')],
@@ -78,11 +85,13 @@ s_labels = ["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"]
                Input('s-slider', 'value'),
                Input('L-slider', 'value')])
 def update_heatmap(likelihood, ref, sim, h_idx, s_idx, L):
-    return make_heatmap(likelihood, ref, sim,
-                        s_labels[s_idx],
-                        h_labels[h_idx],
-                        f'{L:0.1f}')
-
+    if isinstance(L, float):
+        return make_heatmap(likelihood, ref, sim,
+                            s_labels[s_idx],
+                            h_labels[h_idx],
+                            f'{L:0.1f}')
+    else:
+        raise NotImplementedError()
 
 if __name__ == "__main__":
     app.run_server(debug=True)
