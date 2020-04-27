@@ -37,30 +37,27 @@ app.layout = html.Div(children=[
                 html.Label("s"), dcc.Slider(id="s-slider", min=0, max=4, 
                     marks={0: 'Neutral', 1: '-10⁻⁴', 2: '-10⁻³', 3: '-10⁻²', 4: '-10⁻¹'},
                                             value=0),
-                #html.Label("L"), dcc.Slider(id="L-slider", min=0, max=6,
-                #    marks={0: 'synon', 1: 'LOF_probably', 
-                #           2: '100', 3: '300', 4: '1000', 5: '3000', 6: '10000' },
-                #                            value=1)
-                html.Label("L"), html.RadioItems(id="L-select-style",
+                dcc.RadioItems(id="L-select-mode",
                     options=[{'label': "Empirical gene set", 'value': 'empirical'},
                              {'label': "Single length", 'value': 'single'}], value='single'),
-                html.Div(id="L-select")
+                html.Div(id="L-select-single", children=[html.Label("L"), dcc.Slider(id="L-slider-single", min=2, max=5, step=0.1,
+                    marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
+                                            value=3,
+                                            tooltip={'always_visible' : False})]),
+                html.Div(id="L-select-empirical", children=gene_select_controls())
                 ], style={'width': '800px'})
 application = app.server
 
 
-@app.callback(Output('L-select', 'children'),
-              [Input('L-select-style', 'value')])
-def choose_L_selector(l_select_style):
-    if l_select_style == "empirical":
-        return gene_select_controls()
-    elif l_select_style == "single":
-        return dcc.Slider(id="L-slider", min=2, max=5, step=0.1,
-                    marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
-                                            value=3,
-                                            tooltip={'always_visible' : False})
+@app.callback([Output('L-select-single', 'hidden'), Output('L-select-empirical', 'hidden')],
+              [Input('L-select-mode', 'value')])
+def switch_L_selection_visibility(mode):
+    if mode == "empirical":
+        return True, False
+    elif mode == "single":
+        return False, True
     else:
-        raise ValueError(f"Unrecognized L selection style {l_select_style}")
+        raise ValueError(f"Unrecognized L selection mode {mode}")
 
 
 @app.callback([Output('h-slider', 'value'), Output('h-slider', 'disabled')],
@@ -74,7 +71,6 @@ def adjust_h_slider(s_slider_value, h_slider_value):
 
 h_labels = ["0.0", "0.1", "0.3", "0.5"]
 s_labels = ["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"]
-#L_labels = ["LOF_probably", "synon", "2.0", "2.5", "3.0", "3.5", "4.0"]
 
 
 @app.callback(Output('heatmap', 'figure'), 
@@ -83,15 +79,11 @@ s_labels = ["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"]
                Input('sim-dropdown', 'value'),
                Input('h-slider', 'value'),
                Input('s-slider', 'value'),
-               Input('L-slider', 'value')])
+               Input('L-slider-single', 'value')])
 def update_heatmap(likelihood, ref, sim, h_idx, s_idx, L):
-    if isinstance(L, float):
-        return make_heatmap(likelihood, ref, sim,
-                            s_labels[s_idx],
-                            h_labels[h_idx],
-                            f'{L:0.1f}')
-    else:
-        raise NotImplementedError()
-
+    return make_heatmap(likelihood, ref, sim,
+                        s_labels[s_idx],
+                        h_labels[h_idx],
+                        f'{L:0.1f}')
 if __name__ == "__main__":
     app.run_server(debug=True)
