@@ -6,8 +6,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-from heatmaps_common import heatmap_figure, load_sim_data, create_app, gene_select_controls
-
+from heatmaps_common import heatmap_figure, load_sim_data, create_app, gene_select_controls, load_filtered_df
 
 def make_heatmap(likelihood, ref, sim, s, h, L):
     data = load_sim_data(likelihood, ref, sim, s, h, L)
@@ -79,11 +78,23 @@ s_labels = ["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"]
                Input('sim-dropdown', 'value'),
                Input('h-slider', 'value'),
                Input('s-slider', 'value'),
-               Input('L-slider-single', 'value')])
-def update_heatmap(likelihood, ref, sim, h_idx, s_idx, L):
+               Input('func-dropdown', 'value'),
+               Input('geneset-dropdown', 'value'),
+               Input('L-slider', 'value'),
+               Input('L-slider-single', 'value'),
+               Input('L-select-mode', 'value')])
+def update_heatmap(likelihood, ref, sim, h_idx, s_idx, func, geneset, L_boundaries, single_L, L_mode):
+    if L_mode == "single":
+        L = f'{single_L:0.1f}'
+    elif L_mode == "empirical":
+        filtered_data = load_filtered_df(sim, func, geneset, likelihood, L_boundaries[0], L_boundaries[1])
+        L = filtered_data.U.transform('log10') + 8
+    else:
+        raise ValueError(f"Unknown L selection mode {L_mode}")
     return make_heatmap(likelihood, ref, sim,
                         s_labels[s_idx],
                         h_labels[h_idx],
-                        f'{L:0.1f}')
+                        L)
+
 if __name__ == "__main__":
     app.run_server(debug=True)

@@ -58,9 +58,9 @@ def format_heatmap_sims(df):
 
 @lru_cache(maxsize=None)
 def load_sim_data(likelihood, ref, sim, s, h, L):
-    if L in FUNC_LENGTH_TABLES:
+    if isinstance(L, pd.Series):
         sims_to_concat = []
-        for l, count in FUNC_LENGTH_TABLES[L].iteritems():
+        for l, count in L.round(1).value_counts().iteritems():
             sims_to_concat.append(pd.read_table(SIM_DATA_TEMPLATE.format(likelihood=likelihood,
                                                                          ref=ref,
                                                                          sim=sim,
@@ -128,9 +128,14 @@ def format_heatmap_empirical(filtered_df):
 
 @lru_cache(maxsize=None)
 def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
+    filtered_df = load_filtered_df(demography, func, genelist, likelihood, max_L, min_L)
+    return format_heatmap_empirical(filtered_df)
+
+
+def load_filtered_df(demography, func, genelist, likelihood, max_L, min_L):
     unfiltered_df = load_unfiltered_df(likelihood, demography)
     filtered_df = filter_df(unfiltered_df, func, genelist, min_L, max_L)
-    return format_heatmap_empirical(filtered_df)
+    return filtered_df
 
 
 def create_app(app_name, app_filename):
