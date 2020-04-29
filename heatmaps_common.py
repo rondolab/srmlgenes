@@ -56,7 +56,7 @@ def format_heatmap_sims(df):
     return counts_grid
 
 
-@lru_cache(maxsize=None)
+#@lru_cache(maxsize=None)
 def load_sim_data(likelihood, ref, sim, s, h, L):
     if isinstance(L, pd.Series):
         sims_to_concat = []
@@ -132,7 +132,7 @@ def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
     return format_heatmap_empirical(filtered_df)
 
 
-def load_filtered_df(demography, func, genelist, likelihood, max_L, min_L):
+def load_filtered_df(demography, func, genelist, likelihood, min_L, max_L):
     unfiltered_df = load_unfiltered_df(likelihood, demography)
     filtered_df = filter_df(unfiltered_df, func, genelist, min_L, max_L)
     return filtered_df

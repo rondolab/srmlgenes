@@ -37,7 +37,7 @@ app.layout = html.Div(children=[
                     marks={0: 'Neutral', 1: '-10⁻⁴', 2: '-10⁻³', 3: '-10⁻²', 4: '-10⁻¹'},
                                             value=0),
                 dcc.RadioItems(id="L-select-mode",
-                    options=[{'label': "Empirical gene set", 'value': 'empirical'},
+                    options=[{'label': "Empirical length profile", 'value': 'empirical'},
                              {'label': "Single length", 'value': 'single'}], value='single'),
                 html.Div(id="L-select-single", children=[html.Label("L"), dcc.Slider(id="L-slider-single", min=2, max=5, step=0.1,
                     marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
