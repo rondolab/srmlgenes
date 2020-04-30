@@ -1,13 +1,20 @@
-import os
-import sys
+import sys, os
+sys.path.append(os.path.dirname(__file__))
 
-import tables
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-sys.path.append(os.path.dirname(__file__))
-from heatmaps_common import create_app, gene_select_controls, make_heatmap_empirical
+from heatmaps_common import load_exac_data, heatmap_figure, create_app, gene_select_controls
+
+
+def make_heatmap(likelihood, demography, func, genelist, min_L, max_L):
+    histogram, odds_ratios, pvalues = load_exac_data(likelihood, demography, func, genelist, min_L, max_L)
+    if odds_ratios is None:
+        return heatmap_figure(histogram)
+    else:
+        return heatmap_figure(histogram, odds_ratios, pvalues)
+
 
 app = create_app(__name__, __file__)
 
@@ -33,9 +40,8 @@ application = app.server
                Input('geneset-dropdown', 'value'),
                Input('L-slider', 'value')])
 def update_heatmap(likelihood, demography, func, geneset, Ls):
-    return make_heatmap_empirical(likelihood, demography, func, geneset, Ls[0], Ls[1])
+    return make_heatmap(likelihood, demography, func, geneset, Ls[0], Ls[1])
 
 
 if __name__ == "__main__":
-    app.config.update(requests_pathname_prefix="/")
     app.run_server(debug=True)
