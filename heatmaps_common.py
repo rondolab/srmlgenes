@@ -2,6 +2,7 @@ import os
 from functools import lru_cache
 
 import numpy as np
+from scipy.stats import chi2_contingency
 import pandas as pd
 from plotly import graph_objects as go
 import dash
@@ -77,10 +78,24 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
     return format_heatmap_sims(df)
 
 
-def heatmap_figure(heatmap_data):
+def heatmap_figure(heatmap_data, enrichment_data=None):
     heatmap_data = np.array(heatmap_data, dtype=float)
     total_genes = np.nansum(heatmap_data)
-    percent = np.round(heatmap_data / total_genes * 100, 1)
+    frac = heatmap_data / total_genes
+    if enrichment_data is not None:
+        odds_ratios = np.array(enrichment_data[0], dtype=float)
+        p_values = np.array(enrichment_data[1], dtype=float)
+        customdata = np.dstack((frac, odds_ratios, p_values))
+        hovertemplate = f"""h: %{{y}}<br />
+                            s: %{{x}}<br />
+                            genes: %{{z}} / {total_genes} (%{{customdata[0]:.1%}})<br />
+                            enrichment: %{{customdata[1]:0.2f}} (p-value = %{{customdata[1]:0.2f}}<extra></extra>"""
+    else:
+        customdata = frac
+        hovertemplate = f"""h: %{{y}}<br />
+                            s: %{{x}}<br />
+                            genes: %{{z}} / {total_genes} (%{{customdata:.1%}})<extra></extra>"""
+
     fig = go.Figure(data=go.Heatmap(
                         z=heatmap_data,
                         x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
@@ -107,7 +122,7 @@ def filter_df(df, func, genelist, min_L, max_L):
     return df.loc[selector]
 
 
-def format_heatmap_empirical(filtered_df):
+def extract_histogram_empirical(filtered_df):
     crosstab = pd.crosstab(filtered_df["h_grid17_ml"],
                            filtered_df["s_grid17_ml"],
                            dropna=False, margins=True)
@@ -128,8 +143,36 @@ def format_heatmap_empirical(filtered_df):
 
 @lru_cache(maxsize=None)
 def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
-    filtered_df = load_filtered_df(demography, func, genelist, likelihood, max_L, min_L)
-    return format_heatmap_empirical(filtered_df)
+    unfiltered_df = load_unfiltered_df(likelihood, demography)
+    filtered_df = filter_df(unfiltered_df, func, genelist, min_L, max_L)
+    all_genes_count = len(unfiltered_df)
+    filtered_genes_count = len(filtered_df)
+    unfiltered_histogram = extract_histogram_empirical(unfiltered_df)
+    if filtered_genes_count == all_genes_count:
+        return unfiltered_histogram, None, None
+    filtered_histogram = extract_histogram_empirical(filtered_df)
+    odds_ratios = []
+    p_values = []
+    for row_unfiltered, row_filtered in zip(unfiltered_histogram, filtered_histogram):
+        odds_ratio_row = []
+        p_value_row = []
+        for value_unfiltered, value_filtered in zip(row_unfiltered, row_filtered):
+            if value_unfiltered is None or value_filtered is None:
+                odds_ratio_row.append(None)
+                p_value_row.append(None)
+            else:
+                # construct a contingency table
+                a = all_genes_count - filtered_genes_count - value_unfiltered
+                b = value_unfiltered
+                c = filtered_genes_count - value_filtered
+                d = value_filtered
+                odds_ratio = a * b / c * d
+                chi2, p, dof, expected = chi2_contingency([[a, b], [c, d]])
+                odds_ratio_row.append(odds_ratio)
+                p_value_row.append(p)
+        odds_ratios.append(odds_ratio_row)
+        p_values.append(p_value_row)
+    return filtered_histogram, odds_ratios, p_values
 
 
 def load_filtered_df(demography, func, genelist, likelihood, min_L, max_L):

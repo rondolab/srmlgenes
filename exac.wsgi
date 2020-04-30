@@ -9,8 +9,11 @@ from heatmaps_common import load_exac_data, heatmap_figure, create_app, gene_sel
 
 
 def make_heatmap(likelihood, demography, func, genelist, min_L, max_L):
-    data = load_exac_data(likelihood, demography, func, genelist, min_L, max_L)
-    return heatmap_figure(data)
+    histogram, odds_ratios, pvalues = load_exac_data(likelihood, demography, func, genelist, min_L, max_L)
+    if odds_ratios is None:
+        return heatmap_figure(histogram)
+    else:
+        return heatmap_figure(histogram, odds_ratios, pvalues)
 
 
 app = create_app(__name__, __file__)
