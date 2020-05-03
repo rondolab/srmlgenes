@@ -1,16 +1,19 @@
-import sys, os
-sys.path.append(os.path.dirname(__file__))
+import os
+import sys
 
+import tables
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from heatmaps_common import load_exac_data, heatmap_figure, create_app, gene_select_controls
+sys.path.append(os.path.dirname(__file__))
+from heatmaps_common import heatmap_figure, create_app, gene_select_controls
 
+tables_file = tables.open_file(os.path.join(os.path.dirname(__file__), "heatmaps.hdf5"))
 
 def make_heatmap(likelihood, demography, func, genelist, min_L, max_L):
-    data = load_exac_data(likelihood, demography, func, genelist, min_L, max_L)
-    return heatmap_figure(data)
+    data_group = tables_file.get_node(f"/exac/{likelihood}/{demography}/{func}/{genelist}/{min_L}/{max_L}")
+    return heatmap_figure(data_group)
 
 
 app = create_app(__name__, __file__)

@@ -78,6 +78,7 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
 
 
 def heatmap_figure(heatmap_data):
+    # TODO: change heatmap_data to be a tables.Group
     heatmap_data = np.array(heatmap_data, dtype=float)
     total_genes = np.nansum(heatmap_data)
     percent = np.round(heatmap_data / total_genes * 100, 1)

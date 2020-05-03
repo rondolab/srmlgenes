@@ -1,16 +1,25 @@
-import sys, os
-sys.path.append(os.path.dirname(__file__))
+import os
+import sys
 
-import dash
+import tables
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-from heatmaps_common import heatmap_figure, load_sim_data, create_app, gene_select_controls, load_filtered_df
+sys.path.append(os.path.dirname(__file__))
+from heatmaps_common import heatmap_figure, create_app, gene_select_controls
 
-def make_heatmap(likelihood, ref, sim, s, h, L):
-    data = load_sim_data(likelihood, ref, sim, s, h, L)
-    return heatmap_figure(data)
+tables_file = tables.open_file(os.path.join(os.path.dirname(__file__), "heatmaps.hdf5"))
+
+
+def make_heatmap_single(likelihood, ref, sim, s, h, L):
+    data_group = tables_file.get_node(f"/simulated_single/{likelihood}/{ref}/{sim}/{s}/{h}/{L}")
+    return heatmap_figure(data_group)
+
+
+def make_heatmap_empirical(likelihood, ref, sim, s, h, func, geneset, min_L, max_L):
+    data_group = tables_file.get_node(f"/simulated_geneset/{likelihood}/{ref}/{sim}/{s}/{h}/{func}/{geneset}/{min_L}/{max_L}")
+    return heatmap_figure(data_group)
 
 
 app = create_app(__name__, __file__)
@@ -85,16 +94,13 @@ s_labels = ["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"]
                Input('L-select-mode', 'value')])
 def update_heatmap(likelihood, ref, sim, h_idx, s_idx, func, geneset, L_boundaries, single_L, L_mode):
     if L_mode == "single":
-        L = f'{single_L:0.1f}'
+        return make_heatmap_single(likelihood, ref, sim, s_labels[s_idx], h_labels[h_idx], single_L)
     elif L_mode == "empirical":
-        filtered_data = load_filtered_df(sim, func, geneset, likelihood, L_boundaries[0], L_boundaries[1])
-        L = filtered_data.U.transform('log10') + 8
+        return make_heatmap_empirical(likelihood, ref, sim, s_labels[s_idx], h_labels[h_idx],
+                                      func, geneset, L_boundaries[0], L_boundaries[1])
     else:
         raise ValueError(f"Unknown L selection mode {L_mode}")
-    return make_heatmap(likelihood, ref, sim,
-                        s_labels[s_idx],
-                        h_labels[h_idx],
-                        L)
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)
