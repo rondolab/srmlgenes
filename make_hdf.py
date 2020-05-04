@@ -3,6 +3,7 @@ import tables, click
 import numpy as np
 from tqdm import tqdm
 from heatmaps_common import load_exac_data, load_sim_data, load_filtered_df
+from mpi4py.futures import MPIPoolExecutor
 from joblib import Parallel, delayed
 
 LIKELIHOODS = ['prf', 'kde', 'kde_nearest']
@@ -15,7 +16,8 @@ GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD', 'inbred_ALL', 'haplo_Hurles_low2
 @click.command()
 @click.option('--output', '-o', type=click.Path(writable=True, dir_okay=False), default='-')
 @click.option('--n-jobs', '-j', type=int, default=1)
-def main(output, n_jobs):
+@click.option("--truncate", type=int, default=None)
+def main(output, n_jobs, truncate):
     heatmaps_to_load = []
     for likelihood in LIKELIHOODS:
         for ref_demography in DEMOGRAPHIES:
@@ -36,13 +38,15 @@ def main(output, n_jobs):
                     for min_L in np.arange(0.0, 6.0, 0.1).round(1):
                         for max_L in np.arange(min_L + 0.1, 6.1, 0.1).round(1):
                             heatmaps_to_load.append(('exac', likelihood, ref_demography, func, geneset, min_L, max_L))
+    if truncate is not None:
+        heatmaps_to_load = heatmaps_to_load[:truncate]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", tables.NaturalNameWarning)
-        with tables.open_file(output, mode='w', title='heatmaps') as h5file:
-            for key, results in Parallel(n_jobs=n_jobs)(delayed(load_heatmap)(*args) for args in tqdm(heatmaps_to_load)):
-                group = h5file.create_group(h5file.root, key, createparents=True)
-                for name, table in results.items():
-                    h5file.create_array(group, name, table)
+        with tables.open_file(output, mode='w', title='heatmaps', filters=tables.Filters(complevel=6, complib="lzo")) as h5file:
+            with MPIPoolExecutor(max_workers=n_jobs) as pool:
+                for key, results in tqdm(pool.starmap(load_heatmap, heatmaps_to_load), total=len(heatmaps_to_load)):
+                    for name, table in results.items():
+                        h5file.create_carray(key, name, obj=table, createparents=True)
 
 def null_heatmap():
     return [ [0.0,  0.0, 0.0, 0.0],
@@ -52,7 +56,7 @@ def null_heatmap():
 
 
 def load_heatmap(kind, *args):
-    key = f"/{kind}" + "/".join(str(arg) for arg in args)
+    key = f"/{kind}/" + "/".join(str(arg) for arg in args)
     if kind == "simulated_single":
         histogram = load_sim_data(*args)
     elif kind == "simulated_geneset":
