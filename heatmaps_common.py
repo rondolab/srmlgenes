@@ -77,16 +77,13 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
     return format_heatmap_sims(df)
 
 
-def heatmap_figure(heatmap_data):
-    # TODO: change heatmap_data to be a tables.Group
-    heatmap_data = np.array(heatmap_data, dtype=float)
-    total_genes = np.nansum(heatmap_data)
-    percent = np.round(heatmap_data / total_genes * 100, 1)
+def heatmap_figure(heatmap_data_group):
+    total_genes = np.nansum(heatmap_data_group.histogram)
     fig = go.Figure(data=go.Heatmap(
-                        z=heatmap_data,
+                        z=heatmap_data_group.histogram,
                         x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
                         y=["0.0", "0.1", "0.3", "0.5"],
-                        customdata=percent,
+                        customdata=heatmap_data_group.frac,
                         hoverongaps=False,
                         hovertemplate=f"h: %{{y}}<br />s: %{{x}}<br />genes: %{{z}}/{total_genes:0.0f} (%{{customdata}}%)<extra></extra>"),
                     layout=go.Layout(width=800, height=600,
