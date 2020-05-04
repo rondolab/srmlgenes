@@ -25,6 +25,9 @@ LIKELIHOOD_FILES = {('kde_nearest', 'tennessen') : "ExAC_kde_inference_nearest.2
                     ('kde_3d', 'tennessen') : "ExAC_kde_inference_3d.20200124.tsv",
                     ('kde_3d', 'supertennessen') : "ExAC_63K_kde_3d_nolscale_supertennessen_inference.tsv",
                     ('kde_3d', 'subtennessen') : "kde_3d_nolscale_exac_inference_subtennessen.tsv",
+                    ('kde', 'tennessen') : "ExAC_kde_inference_3d.20200124.tsv",
+                    ('kde', 'supertennessen') : "ExAC_63K_kde_3d_nolscale_supertennessen_inference.tsv",
+                    ('kde', 'subtennessen') : "kde_3d_nolscale_exac_inference_subtennessen.tsv",
                     ('prf', 'tennessen') : "ExAC_prf_inference.20191212.tsv",
                     ('prf', 'supertennessen') : "ExAC_63K_prf_supertennessen_inference.tsv",
                     ('prf', 'subtennessen') : "ExAC_63K_prf_subtennessen_inference.tsv"}
