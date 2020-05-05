@@ -9,9 +9,8 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 
-from sim import tables_file
 
-from exac import tables_file
+TABLES_FILE = tables.open_file(os.path.join(os.path.dirname(__file__), "heatmaps.hdf5"))
 
 SIM_DATA_TEMPLATE = "~/genecad/04_dominance/genedose/simulation_inference_{likelihood}/{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv"
 EXAC_SUMSTATS_TABLE = pd.read_table("/hpc/users/jordad05/genecad/04_dominance/genedose/ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
@@ -85,13 +84,13 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
     return format_heatmap_sims(df)
 
 
-def heatmap_figure(heatmap_data_group):
-    total_genes = np.nansum(heatmap_data_group.histogram)
+def heatmap_figure(heatmap_data_row):
+    total_genes = np.nansum(heatmap_data_row.histogram)
     fig = go.Figure(data=go.Heatmap(
-                        z=heatmap_data_group.histogram,
+                        z=heatmap_data_row.histogram,
                         x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
                         y=["0.0", "0.1", "0.3", "0.5"],
-                        customdata=heatmap_data_group.frac,
+                        customdata=heatmap_data_row.frac,
                         hoverongaps=False,
                         hovertemplate=f"h: %{{y}}<br />s: %{{x}}<br />genes: %{{z}}/{total_genes:0.0f} (%{{customdata}}%)<extra></extra>"),
                     layout=go.Layout(width=800, height=600,
@@ -224,15 +223,34 @@ class EmpiricalHeatmap(HeatmapBase, GeneSelectionMixin):
 
 
 def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
-    table = tables_file.get_node(f"/simulated_single/{likelihood}/{ref}/{sim}/{s}/{h}/{L}")
-    return heatmap_figure(data_group)
+    table = TABLES_FILE.root.heatmaps.simulated_single
+    rows = table.read_where(f"""(likelihood     == {LIKELIHOOD_ENUM[likelihood]}) & \
+                               (ref_demography == {DEMOGRAPHY_ENUM[ref]}) & \
+                               (sim_demography == {DEMOGRAPHY_ENUM[sim]}) & \
+                               (s              == {S_ENUM[s]}) & \
+                               (h              == {H_ENUM[h]}) & \
+                               (L              == {L:.1f})""")
+    return heatmap_figure(rows[0])
 
 
 def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, max_L):
-    data_group = tables_file.get_node(f"/simulated_geneset/{likelihood}/{ref}/{sim}/{s}/{h}/{func}/{geneset}/{min_L}/{max_L}")
-    return heatmap_figure(data_group)
+    table = TABLES_FILE.root.heatmaps.simulated_geneset
+    rows = table.read_where(f"""(likelihood     == {LIKELIHOOD_ENUM[likelihood]}) & \
+                                (ref_demography == {DEMOGRAPHY_ENUM[ref]}) & \
+                                (sim_demography == {DEMOGRAPHY_ENUM[sim]}) & \
+                                (s              == {S_ENUM[s]}) & \
+                                (h              == {H_ENUM[h]}) & \
+                                (func           == {FUNC_ENUM[func]}) & \
+                                (geneset        == {GENESET_ENUM[geneset]}) & \
+                                (min_L == {min_L:.1f}) & (max_L == {max_L:.1f})""")
+    return heatmap_figure(rows[0])
 
 
 def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L):
-    data_group = tables_file.get_node(f"/exac/{likelihood}/{demography}/{func}/{genelist}/{min_L}/{max_L}")
-    return heatmap_figure(data_group)
+    table = TABLES_FILE.root.heatmaps.simulated_geneset
+    rows = table.read_where(f"""(likelihood     == {LIKELIHOOD_ENUM[likelihood]}) & \
+                                (ref_demography == {DEMOGRAPHY_ENUM[demography]}) & \
+                                (func           == {FUNC_ENUM[func]}) & \
+                                (geneset        == {GENESET_ENUM[genelist]}) & \
+                                (min_L == {min_L:.1f}) & (max_L == {max_L:.1f})""")
+    return heatmap_figure(rows[0])
