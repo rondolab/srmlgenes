@@ -10,8 +10,6 @@ sys.path.append(os.path.dirname(__file__))
 from heatmaps_common import create_app, gene_select_controls, make_heatmap_single_sim, \
     make_heatmap_geneset_sim
 
-tables_file = tables.open_file(os.path.join(os.path.dirname(__file__), "heatmaps.hdf5"))
-
 app = create_app(__name__, __file__)
 
 app.layout = html.Div(children=[
