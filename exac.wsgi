@@ -7,14 +7,9 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 
 sys.path.append(os.path.dirname(__file__))
-from heatmaps_common import heatmap_figure, create_app, gene_select_controls
+from heatmaps_common import create_app, gene_select_controls, make_heatmap_empirical
 
 tables_file = tables.open_file(os.path.join(os.path.dirname(__file__), "heatmaps.hdf5"))
-
-def make_heatmap(likelihood, demography, func, genelist, min_L, max_L):
-    data_group = tables_file.get_node(f"/exac/{likelihood}/{demography}/{func}/{genelist}/{min_L}/{max_L}")
-    return heatmap_figure(data_group)
-
 
 app = create_app(__name__, __file__)
 
@@ -40,7 +35,7 @@ application = app.server
                Input('geneset-dropdown', 'value'),
                Input('L-slider', 'value')])
 def update_heatmap(likelihood, demography, func, geneset, Ls):
-    return make_heatmap(likelihood, demography, func, geneset, Ls[0], Ls[1])
+    return make_heatmap_empirical(likelihood, demography, func, geneset, Ls[0], Ls[1])
 
 
 if __name__ == "__main__":

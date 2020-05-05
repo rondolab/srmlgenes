@@ -3,10 +3,15 @@ from functools import lru_cache
 
 import numpy as np
 import pandas as pd
+import tables
 from plotly import graph_objects as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+
+from sim import tables_file
+
+from exac import tables_file
 
 SIM_DATA_TEMPLATE = "~/genecad/04_dominance/genedose/simulation_inference_{likelihood}/{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv"
 EXAC_SUMSTATS_TABLE = pd.read_table("/hpc/users/jordad05/genecad/04_dominance/genedose/ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
@@ -166,3 +171,68 @@ def gene_select_controls():
                                      value=[2, 5],
                                      tooltip={'always_visible': False})
     ]
+
+
+LIKELIHOODS = ['prf', 'kde', 'kde_nearest']
+DEMOGRAPHIES = ['tennessen', 'supertennessen']
+S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
+H_VALUES = ['0.0', '0.1', '0.3', '0.5']
+FUNCS = ['LOF_probably', 'synon']
+GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR']
+LIKELIHOOD_ENUM = tables.Enum(LIKELIHOODS)
+DEMOGRAPHY_ENUM = tables.Enum(DEMOGRAPHIES)
+S_ENUM = tables.Enum(S_VALUES)
+H_ENUM = tables.Enum(H_VALUES)
+FUNC_ENUM = tables.Enum(FUNCS)
+GENESET_ENUM = tables.Enum(GENESETS)
+BASE_OFFSET = 0
+SIM_OFFSET = 10
+GENE_OFFSET = 20
+DATA_OFFSET = 30
+
+
+class HeatmapBase(tables.IsDescription):
+    histogram = tables.Float64Col(shape=(4,5), pos=DATA_OFFSET + 0)
+    frac = tables.Float64Col(shape=(4,5), pos=DATA_OFFSET + 1)
+    likelihood = tables.EnumCol(LIKELIHOOD_ENUM, "prf", base='uint8', pos=BASE_OFFSET + 0)
+    ref_demography = tables.EnumCol(DEMOGRAPHY_ENUM, "tennessen", base='uint8', pos=BASE_OFFSET + 1)
+
+
+class SimulationHeatmapBase(HeatmapBase):
+    sim_demography = tables.EnumCol(DEMOGRAPHY_ENUM, "tennessen", base='uint8', pos=SIM_OFFSET + 0)
+    s = tables.EnumCol(S_ENUM, "NEUTRAL", base='uint8', pos=SIM_OFFSET + 1)
+    h = tables.EnumCol(H_ENUM, "0.5", base='uint8', pos=SIM_OFFSET + 2)
+
+
+class GeneSelectionMixin(tables.IsDescription):
+    func = tables.EnumCol(FUNC_ENUM, "LOF_probably", base='uint8', pos=GENE_OFFSET + 0)
+    geneset = tables.EnumCol(GENESET_ENUM, "all", base='uint8', pos=GENE_OFFSET + 1)
+    min_L = tables.Float64Col(pos=GENE_OFFSET + 2)
+    max_L = tables.Float64Col(pos=GENE_OFFSET + 3)
+
+
+class SimulationHeatmapFixedLength(SimulationHeatmapBase):
+    L = tables.Float64Col(pos=2)
+
+
+class SimulationHeatmapVariableLength(SimulationHeatmapBase, GeneSelectionMixin):
+    pass
+
+
+class EmpiricalHeatmap(HeatmapBase, GeneSelectionMixin):
+    pass
+
+
+def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
+    table = tables_file.get_node(f"/simulated_single/{likelihood}/{ref}/{sim}/{s}/{h}/{L}")
+    return heatmap_figure(data_group)
+
+
+def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, max_L):
+    data_group = tables_file.get_node(f"/simulated_geneset/{likelihood}/{ref}/{sim}/{s}/{h}/{func}/{geneset}/{min_L}/{max_L}")
+    return heatmap_figure(data_group)
+
+
+def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L):
+    data_group = tables_file.get_node(f"/exac/{likelihood}/{demography}/{func}/{genelist}/{min_L}/{max_L}")
+    return heatmap_figure(data_group)
