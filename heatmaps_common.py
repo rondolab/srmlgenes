@@ -200,7 +200,8 @@ def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
                 b = value_unfiltered
                 c = filtered_genes_count - value_filtered
                 d = value_filtered
-                odds_ratio = a * b / c * d
+                with np.errstate(divide='ignore'):
+                    odds_ratio = a * b / c * d
                 chi2, p, dof, expected = chi2_contingency([[a, b], [c, d]])
                 odds_ratio_row.append(odds_ratio)
                 p_value_row.append(p)

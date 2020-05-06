@@ -54,7 +54,7 @@ def main(output, n_jobs, truncate, include_single_sims, include_geneset_sims, in
         h5file.create_table(heatmaps_group, "simulated_single", SimulationHeatmapFixedLength, expectedrows=15000)
         h5file.create_table(heatmaps_group, "simulated_geneset", SimulationHeatmapVariableLength, expectedrows=3000000)
         h5file.create_table(heatmaps_group, "exac", EmpiricalHeatmap, expectedrows=50000)
-        for table_name, row in Parallel(n_jobs=n_jobs)(delayed(load_heatmap)(*args) for args in tqdm(heatmaps_to_load, desc="calculating heatmaps")):
+        for table_name, row in Parallel(n_jobs=n_jobs, backend="multiprocessing")(delayed(load_heatmap)(*args) for args in tqdm(heatmaps_to_load, desc="calculating heatmaps")):
             getattr(heatmaps_group, table_name).append([row])
         # index tables
         for col_name in tqdm(["likelihood", "ref_demography", "sim_demography", "s", "h", "L"],
