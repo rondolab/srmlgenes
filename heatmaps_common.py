@@ -145,7 +145,10 @@ def format_heatmap_empirical(filtered_df):
     counts_grid = []
     for h in 0.0, 0.1, 0.3, 0.5:
         if h == 0.5:
-            counts_row = [crosstab.loc["All", 0.0]]
+            try:
+                counts_row = [crosstab.loc["All", 0.0]]
+            except KeyError:
+                counts_row = [0]
         else:
             counts_row = [None]
         for s in 1e-4, 1e-3, 1e-2, 1e-1:
@@ -159,7 +162,7 @@ def format_heatmap_empirical(filtered_df):
 
 @lru_cache(maxsize=None)
 def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
-    filtered_df = load_filtered_df(demography, func, genelist, likelihood, max_L, min_L)
+    filtered_df = load_filtered_df(demography, func, genelist, likelihood, min_L, max_L)
     return format_heatmap_empirical(filtered_df)
 
 
