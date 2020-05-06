@@ -12,7 +12,7 @@ import dash_html_components as html
 
 BASE_DIR = "/sc/arion/projects/GENECAD/04_dominance"
 HEATMAP_TABLES_PATH = os.path.join(os.path.dirname(__file__), "heatmaps.hdf5")
-SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "simulation_inference_{likelihood}", "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv")
+SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "genedose", "simulation_inference_{likelihood}", "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv")
 EXAC_SUMSTATS_PATH = os.path.join(BASE_DIR, "genedose", "ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
 
 LIKELIHOOD_FILES = {('kde_nearest', 'tennessen') : "ExAC_kde_inference_nearest.20200130.tsv",
