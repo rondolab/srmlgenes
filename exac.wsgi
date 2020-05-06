@@ -37,4 +37,5 @@ def update_heatmap(likelihood, demography, func, geneset, Ls):
 
 
 if __name__ == "__main__":
+    app.config.update(requests_pathname_prefix="/")
     app.run_server(debug=True)

@@ -60,7 +60,7 @@ else:
             .clip(2.0, 5.0) \
             .value_counts()
 
-    geneset_base_dir = os.path.join(BASE_DIR, "slim", "mock_genome")
+geneset_base_dir = os.path.join(BASE_DIR, "slim", "mock_genome")
 
 try:
     for geneset_name in filter(lambda name: name != "all", GENESETS):
@@ -111,12 +111,12 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
 
 
 def heatmap_figure(heatmap_data_row):
-    total_genes = np.nansum(heatmap_data_row.histogram)
+    total_genes = np.nansum(heatmap_data_row["histogram"])
     fig = go.Figure(data=go.Heatmap(
-                        z=heatmap_data_row.histogram,
+                        z=heatmap_data_row["histogram"],
                         x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
                         y=["0.0", "0.1", "0.3", "0.5"],
-                        customdata=heatmap_data_row.frac,
+                        customdata=heatmap_data_row["frac"],
                         hoverongaps=False,
                         hovertemplate=f"h: %{{y}}<br />s: %{{x}}<br />genes: %{{z}}/{total_genes:0.0f} (%{{customdata}}%)<extra></extra>"),
                     layout=go.Layout(width=800, height=600,
