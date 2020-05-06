@@ -76,7 +76,7 @@ except FileNotFoundError:
     warnings.warn(f"Gene list files not found (looking in {geneset_base_dir})", DataFileWarning)
 
 
-def format_heatmap_sims(df):
+def extract_histogram_sims(df):
     ml_bin_names = df.transpose().drop("L").idxmax()
     split_names = ml_bin_names.str.split("_")
     ml_s = split_names.str.get(0)
@@ -108,7 +108,7 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
                                                     ref=ref,
                                                     sim=sim,
                                                     s=s, h=h, L=L))
-    return format_heatmap_sims(df)
+    return extract_histogram_sims(df)
 
 
 def heatmap_figure(heatmap_data_row):
@@ -133,9 +133,9 @@ def heatmap_figure(heatmap_data_row):
                         y=["0.0", "0.1", "0.3", "0.5"],
                         customdata=customdata,
                         hoverongaps=False,
-                        hovertemplate=hovertemplate
+                        hovertemplate=hovertemplate,
                     layout=go.Layout(width=800, height=600,
-                xaxis_type='category', yaxis_type='category'))
+                xaxis_type='category', yaxis_type='category')))
     return fig
 
 
@@ -256,7 +256,7 @@ BASE_OFFSET = 0
 SIM_OFFSET = 10
 GENE_OFFSET = 20
 DATA_OFFSET = 30
-
+ENRICHMENT_OFFSET = 40
 
 class HeatmapBase(tables.IsDescription):
     histogram = tables.Float64Col(shape=(4,5), pos=DATA_OFFSET + 0)
@@ -287,7 +287,8 @@ class SimulationHeatmapVariableLength(SimulationHeatmapBase, GeneSelectionMixin)
 
 
 class EmpiricalHeatmap(HeatmapBase, GeneSelectionMixin):
-    pass
+    odds_ratios = tables.Float64Col(shape=(4,5), pos=ENRICHMENT_OFFSET+0)
+    p_values = tables.Float64Col(shape=(4,5), pos=ENRICHMENT_OFFSET+1)
 
 
 def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
