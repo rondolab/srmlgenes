@@ -11,7 +11,7 @@ from joblib import Parallel, delayed
 
 @click.command()
 @click.option('--output', '-o', type=click.Path(writable=True, dir_okay=False), default=heatmaps_common.HEATMAP_TABLES_PATH)
-@click.option('--n-jobs', '-j', type=int, default=1)
+@click.option('--n-jobs', '-j', type=int, envvar="LSB_DJOB_NUMPROC", default=1)
 @click.option("--truncate", type=int, default=None)
 @click.option("--include-single-sims/--skip-single-sims", default=True)
 @click.option("--include-geneset-sims/--skip-geneset-sims", default=True)
