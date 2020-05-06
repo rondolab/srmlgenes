@@ -58,9 +58,8 @@ else:
             .clip(2.0, 5.0) \
             .value_counts()
 
-try:
     geneset_base_dir = os.path.join(BASE_DIR, "slim", "mock_genome")
-    for geneset_name in GENESETS:
+    for geneset_name in filter(GENESETS, lambda name: name != "all"):
         filename = os.path.join(geneset_base_dir, geneset_name + '.tsv')
         geneset = set()
         with open(filename) as list_file:
