@@ -59,7 +59,9 @@ else:
             .value_counts()
 
     geneset_base_dir = os.path.join(BASE_DIR, "slim", "mock_genome")
-    for geneset_name in filter(GENESETS, lambda name: name != "all"):
+
+try:
+    for geneset_name in filter(lambda name: name != "all", GENESETS):
         filename = os.path.join(geneset_base_dir, geneset_name + '.tsv')
         geneset = set()
         with open(filename) as list_file:
