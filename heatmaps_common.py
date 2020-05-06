@@ -5,6 +5,7 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
 import numpy as np
+from scipy.stats import chi2_contingency
 import pandas as pd
 import tables
 from plotly import graph_objects as go
@@ -112,13 +113,27 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
 
 def heatmap_figure(heatmap_data_row):
     total_genes = np.nansum(heatmap_data_row["histogram"])
+    try:
+        customdata = np.dstack((heatmap_data_row["frac"],
+                                heatmap_data_row["odds_ratios"],
+                                heatmap_data_row["p_values"]))
+        hovertemplate = f"""h: %{{y}}<br />
+                            s: %{{x}}<br />
+                            genes: %{{z}} / {total_genes} (%{{customdata[0]:.1%}})<br />
+                            enrichment: %{{customdata[1]:0.2f}} (p-value = %{{customdata[1]:0.2f}}<extra></extra>"""
+    except KeyError:
+        customdata = heatmap_data_row["frac"]
+        hovertemplate = f"""h: %{{y}}<br />
+                                    s: %{{x}}<br />
+                                    genes: %{{z}} / {total_genes} (%{{customdata:.1%}})<extra></extra>"""
+
     fig = go.Figure(data=go.Heatmap(
                         z=heatmap_data_row["histogram"],
                         x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
                         y=["0.0", "0.1", "0.3", "0.5"],
-                        customdata=heatmap_data_row["frac"],
+                        customdata=customdata,
                         hoverongaps=False,
-                        hovertemplate=f"h: %{{y}}<br />s: %{{x}}<br />genes: %{{z}}/{total_genes:0.0f} (%{{customdata}}%)<extra></extra>"),
+                        hovertemplate=hovertemplate
                     layout=go.Layout(width=800, height=600,
                 xaxis_type='category', yaxis_type='category'))
     return fig
@@ -138,7 +153,7 @@ def filter_df(df, func, genelist, min_L, max_L):
     return df.loc[selector]
 
 
-def format_heatmap_empirical(filtered_df):
+def extract_histogram_empirical(filtered_df):
     crosstab = pd.crosstab(filtered_df["h_grid17_ml"],
                            filtered_df["s_grid17_ml"],
                            dropna=False, margins=True)
@@ -162,8 +177,36 @@ def format_heatmap_empirical(filtered_df):
 
 @lru_cache(maxsize=None)
 def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
-    filtered_df = load_filtered_df(demography, func, genelist, likelihood, min_L, max_L)
-    return format_heatmap_empirical(filtered_df)
+    unfiltered_df = load_unfiltered_df(likelihood, demography)
+    filtered_df = filter_df(unfiltered_df, func, genelist, min_L, max_L)
+    all_genes_count = len(unfiltered_df)
+    filtered_genes_count = len(filtered_df)
+    unfiltered_histogram = extract_histogram_empirical(unfiltered_df)
+    if filtered_genes_count == all_genes_count:
+        return unfiltered_histogram, None, None
+    filtered_histogram = extract_histogram_empirical(filtered_df)
+    odds_ratios = []
+    p_values = []
+    for row_unfiltered, row_filtered in zip(unfiltered_histogram, filtered_histogram):
+        odds_ratio_row = []
+        p_value_row = []
+        for value_unfiltered, value_filtered in zip(row_unfiltered, row_filtered):
+            if value_unfiltered is None or value_filtered is None:
+                odds_ratio_row.append(None)
+                p_value_row.append(None)
+            else:
+                # construct a contingency table
+                a = all_genes_count - filtered_genes_count - value_unfiltered
+                b = value_unfiltered
+                c = filtered_genes_count - value_filtered
+                d = value_filtered
+                odds_ratio = a * b / c * d
+                chi2, p, dof, expected = chi2_contingency([[a, b], [c, d]])
+                odds_ratio_row.append(odds_ratio)
+                p_value_row.append(p)
+        odds_ratios.append(odds_ratio_row)
+        p_values.append(p_value_row)
+    return filtered_histogram, odds_ratios, p_values
 
 
 def load_filtered_df(demography, func, genelist, likelihood, min_L, max_L):
