@@ -1,6 +1,8 @@
 import os
 import warnings
 from functools import lru_cache
+from pathlib import Path, PurePosixPath
+from urllib.parse import quote
 
 import numpy as np
 import pandas as pd
@@ -169,8 +171,10 @@ def load_filtered_df(demography, func, genelist, likelihood, min_L, max_L):
 
 def create_app(app_name, app_filename):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+    app_path = Path(app_filename)
+    app_url = PurePosixPath('/', app_path.parent.name, app_path.name)
     app = dash.Dash(app_name, external_stylesheets=external_stylesheets,
-                    requests_pathname_prefix="/" + os.path.relpath(app_filename, "/hpc/web/users.hpc.mssm.edu") + "/")
+                    requests_pathname_prefix=quote(str(app_url) + "/"))
     if "dev" in __file__:
         app.enable_dev_tools(debug=True)
     return app
