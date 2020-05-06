@@ -228,7 +228,7 @@ class GeneSelectionMixin(tables.IsDescription):
 
 
 class SimulationHeatmapFixedLength(SimulationHeatmapBase):
-    L = tables.Float64Col(pos=2)
+    L = tables.Float64Col(pos=GENE_OFFSET + 0)
 
 
 class SimulationHeatmapVariableLength(SimulationHeatmapBase, GeneSelectionMixin):
