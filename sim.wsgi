@@ -91,4 +91,5 @@ def update_heatmap(likelihood, ref, sim, h_idx, s_idx, func, geneset, L_boundari
 
 
 if __name__ == "__main__":
+    app.config.update(requests_pathname_prefix="/")
     app.run_server(debug=True)
