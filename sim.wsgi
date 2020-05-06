@@ -1,6 +1,7 @@
 import os
 import sys
 
+import numpy as np
 import tables
 import dash_core_components as dcc
 import dash_html_components as html
@@ -84,6 +85,7 @@ def update_heatmap(likelihood, ref, sim, h_idx, s_idx, func, geneset, L_boundari
     if L_mode == "single":
         return make_heatmap_single_sim(likelihood, ref, sim, s_labels[s_idx], h_labels[h_idx], single_L)
     elif L_mode == "empirical":
+        L_boundaries = np.clip(L_boundaries, 2.0, 5.0)
         return make_heatmap_geneset_sim(likelihood, ref, sim, s_labels[s_idx], h_labels[h_idx],
                                         func, geneset, L_boundaries[0], L_boundaries[1])
     else:
