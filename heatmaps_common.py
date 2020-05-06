@@ -176,22 +176,28 @@ def extract_histogram_empirical(filtered_df):
 
 
 @lru_cache(maxsize=None)
-def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
-    unfiltered_df = load_unfiltered_df(likelihood, demography)
-    filtered_df = filter_df(unfiltered_df, func, genelist, min_L, max_L)
-    all_genes_count = len(unfiltered_df)
+def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
+    # TODO: Write inverted geneset selection!
+    geneset_df = load_filtered_df(demography, func, genelist, likelihood, min_L, max_L)
+    geneset_histogram = extract_histogram_empirical(geneset_df)
+    geneset_count = len(geneset_df)
+    if geneset == "all":
+        ones = [[None, 1.0, 1.0, 1.0, 1.0],
+                [None, 1.0, 1.0, 1.0, 1.0],
+                [None, 1.0, 1.0, 1.0, 1.0],
+                [1.0,  1.0, 1.0, 1.0, 1.0]] # is this the right order? I'm not sure.
+        return geneset_histogram, ones, ones
+    all_df = load_filtered_df(demography, func, "all", likelihood, min_L, max_L)
+    all_count = len(all_df)
     filtered_genes_count = len(filtered_df)
-    unfiltered_histogram = extract_histogram_empirical(unfiltered_df)
-    if filtered_genes_count == all_genes_count:
-        return unfiltered_histogram, None, None
-    filtered_histogram = extract_histogram_empirical(filtered_df)
+    all_histogram = extract_histogram_empirical(all_df)
     odds_ratios = []
     p_values = []
-    for row_unfiltered, row_filtered in zip(unfiltered_histogram, filtered_histogram):
+    for row_all, row_geneset in zip(all_histogram, geneset_histogram):
         odds_ratio_row = []
         p_value_row = []
-        for value_unfiltered, value_filtered in zip(row_unfiltered, row_filtered):
-            if value_unfiltered is None or value_filtered is None:
+        for cell_count_all, cell_count_geneset in zip(row_all, row_geneset):
+            if cell_count_all is None or cell_count_geneset is None:
                 odds_ratio_row.append(None)
                 p_value_row.append(None)
             else:
@@ -201,7 +207,7 @@ def load_exac_data(likelihood, demography, func, genelist, min_L, max_L):
                 c = filtered_genes_count - value_filtered
                 d = value_filtered
                 with np.errstate(divide='ignore'):
-                    odds_ratio = a * b / c * d
+                    odds_ratio = (a * b) / (c * d)
                 chi2, p, dof, expected = chi2_contingency([[a, b], [c, d]])
                 odds_ratio_row.append(odds_ratio)
                 p_value_row.append(p)
