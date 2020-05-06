@@ -105,15 +105,17 @@ def load_heatmap(kind, *args):
                   GENESET_ENUM[geneset],
                   float(min_L), float(max_L))
         try:
-            histogram = load_exac_data(likelihood, demography, func, geneset, min_L, max_L)
+            histogram, odds_ratios, p_values = load_exac_data(likelihood, demography, func, geneset, min_L, max_L)
         except ValueError:
             histogram = get_null_histogram()
+            odds_ratios = get_null_histogram()
+            p_values = get_null_histogram()
     else:
         raise ValueError(f"Unrecognized heatmap kind {kind!r}")
     histogram = np.array(histogram, dtype=float)
     with np.errstate(divide="ignore", invalid="ignore"):
         frac = histogram / np.nansum(histogram)
-    return kind, record + (histogram, frac)
+    return kind, record + (histogram, frac, odds_ratios, p_values)
 
 
 def get_null_histogram():
