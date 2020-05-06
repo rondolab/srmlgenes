@@ -20,7 +20,7 @@ def main(output, n_jobs, truncate):
                 for sim_demography in DEMOGRAPHIES:
                     for s in S_VALUES:
                         for h in H_VALUES:
-                            if s == "NEUTRAL" and h != 0.5:
+                            if s == "NEUTRAL" and h != "0.5":
                                 continue
                             for L in np.arange(2.0, 5.1, 0.1).round(1):
                                 heatmaps_to_load.append(('simulated_single', likelihood, ref_demography, sim_demography, s, h, L))
@@ -39,7 +39,7 @@ def main(output, n_jobs, truncate):
                                 progress.update(1)
     if truncate is not None:
         heatmaps_to_load = heatmaps_to_load[:truncate]
-    with tables.open_file(output, mode='w', title='heatmaps', filters=tables.Filters(complevel=6, complib="lzo")) as h5file:
+    with tables.open_file(output, mode='w', title='heatmaps', filters=tables.Filters(complevel=6, complib="blosc")) as h5file:
         heatmaps_group = h5file.create_group(h5file.root, "heatmaps")
         h5file.create_table(heatmaps_group, "simulated_single", SimulationHeatmapFixedLength, expectedrows=15000)
         h5file.create_table(heatmaps_group, "simulated_geneset", SimulationHeatmapVariableLength, expectedrows=3000000)
@@ -47,6 +47,18 @@ def main(output, n_jobs, truncate):
         with MPIPoolExecutor(max_workers=n_jobs) as pool:
             for table_name, row in tqdm(pool.starmap(load_heatmap, heatmaps_to_load), total=len(heatmaps_to_load), desc="calculating heatmaps"):
                 getattr(heatmaps_group, table_name).append([row])
+        # index tables
+        for col_name in tqdm(["likelihood", "ref_demography", "sim_demography", "s", "h", "L"],
+                             desc="indexing simulated_single table"):
+            heatmaps_group.simulated_single.col(col_name).create_index()
+        for col_name in tqdm(["likelihood", "ref_demography", "sim_demography", "s", "h",
+                              "func", "geneset", "min_L", "max_L"],
+                             desc="indexing simulated_geneset table"):
+            heatmaps_group.simulated_geneset.col(col_name).create_index()
+        for col_name in tqdm(["likelihood", "ref_demography",
+                              "func", "geneset", "min_L", "max_L"],
+                             desc="indexing exac table"):
+            heatmaps_group.exac.col(col_name).create_index()
 
 
 def load_heatmap(kind, *args):
