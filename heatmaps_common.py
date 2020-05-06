@@ -269,6 +269,7 @@ def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, m
 
 
 def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L):
+    breakpoint()
     table = HEATMAP_TABLES_FILE.root.heatmaps.simulated_geneset
     rows = table.read_where(f"""(likelihood     == {LIKELIHOOD_ENUM[likelihood]}) & \
                                 (ref_demography == {DEMOGRAPHY_ENUM[demography]}) & \

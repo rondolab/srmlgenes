@@ -88,7 +88,7 @@ def load_heatmap(packed_args):
         try:
             histogram = load_sim_data(likelihood, ref, sim, s, h, L)
         except ValueError:
-            histogram = np.zeros((4,5))
+            histogram = get_null_histogram()
     elif kind == "exac":
         likelihood, demography, func, geneset, min_L, max_L = args
         record = (LIKELIHOOD_ENUM[likelihood],
@@ -99,7 +99,7 @@ def load_heatmap(packed_args):
         try:
             histogram = load_exac_data(likelihood, demography, func, geneset, min_L, max_L)
         except ValueError:
-            histogram = np.zeros((4,5))
+            histogram = get_null_histogram()
     else:
         raise ValueError(f"Unrecognized heatmap kind {kind!r}")
     histogram = np.array(histogram, dtype=float)
@@ -107,6 +107,11 @@ def load_heatmap(packed_args):
         frac = histogram / np.nansum(histogram)
     return kind, record + (histogram, frac)
 
+
+def get_null_histogram():
+    histogram = np.zeros((4,5))
+    histogram[:-1,0] = np.nan
+    return histogram
 
 if __name__ == "__main__":
     main()
