@@ -5,7 +5,7 @@ from tqdm import tqdm
 from heatmaps_common import load_exac_data, load_sim_data, load_filtered_df, LIKELIHOODS, DEMOGRAPHIES, S_VALUES, \
     H_VALUES, FUNCS, GENESETS, LIKELIHOOD_ENUM, DEMOGRAPHY_ENUM, S_ENUM, H_ENUM, FUNC_ENUM, GENESET_ENUM, \
     SimulationHeatmapFixedLength, SimulationHeatmapVariableLength, EmpiricalHeatmap
-from mpi4py.futures import MPIPoolExecutor
+from multiprocessing import Pool
 
 
 @click.command()
@@ -44,8 +44,8 @@ def main(output, n_jobs, truncate):
         h5file.create_table(heatmaps_group, "simulated_single", SimulationHeatmapFixedLength, expectedrows=15000)
         h5file.create_table(heatmaps_group, "simulated_geneset", SimulationHeatmapVariableLength, expectedrows=3000000)
         h5file.create_table(heatmaps_group, "exac", EmpiricalHeatmap, expectedrows=50000)
-        with MPIPoolExecutor(max_workers=n_jobs) as pool:
-            for table_name, row in tqdm(pool.starmap(load_heatmap, heatmaps_to_load), total=len(heatmaps_to_load), desc="calculating heatmaps"):
+        with Pool(n_jobs) as pool:
+            for table_name, row in tqdm(pool.imap(load_heatmap, heatmaps_to_load), total=len(heatmaps_to_load), desc="calculating heatmaps"):
                 getattr(heatmaps_group, table_name).append([row])
         # index tables
         for col_name in tqdm(["likelihood", "ref_demography", "sim_demography", "s", "h", "L"],
@@ -61,7 +61,8 @@ def main(output, n_jobs, truncate):
             heatmaps_group.exac.col(col_name).create_index()
 
 
-def load_heatmap(kind, *args):
+def load_heatmap(packed_args):
+    kind, *args = packed_args
     if kind == "simulated_single":
         likelihood, ref, sim, s, h, L = args
         record = (LIKELIHOOD_ENUM[likelihood],
