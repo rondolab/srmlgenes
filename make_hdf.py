@@ -80,6 +80,7 @@ def load_heatmap(kind, *args):
                   H_ENUM[h],
                   float(L))
         histogram = load_sim_data(*args)
+        excess_results = ()
     elif kind == "simulated_geneset":
         likelihood, ref, sim, s, h, func, geneset, min_L, max_L = args
         record = (LIKELIHOOD_ENUM[likelihood],
@@ -97,6 +98,7 @@ def load_heatmap(kind, *args):
             histogram = load_sim_data(likelihood, ref, sim, s, h, L)
         except ValueError:
             histogram = get_null_histogram()
+        excess_results = ()
     elif kind == "exac":
         likelihood, demography, func, geneset, min_L, max_L = args
         record = (LIKELIHOOD_ENUM[likelihood],
@@ -110,12 +112,13 @@ def load_heatmap(kind, *args):
             histogram = get_null_histogram()
             odds_ratios = get_null_histogram()
             p_values = get_null_histogram()
+        excess_results = (odds_ratios, p_values)
     else:
         raise ValueError(f"Unrecognized heatmap kind {kind!r}")
     histogram = np.array(histogram, dtype=float)
     with np.errstate(divide="ignore", invalid="ignore"):
         frac = histogram / np.nansum(histogram)
-    return kind, record + (histogram, frac, odds_ratios, p_values)
+    return kind, record + (histogram, frac) + excess_results
 
 
 def get_null_histogram():
