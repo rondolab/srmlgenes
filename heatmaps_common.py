@@ -178,15 +178,15 @@ def extract_histogram_empirical(filtered_df):
 @lru_cache(maxsize=None)
 def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
     geneset_df = load_filtered_df(demography, func, geneset, likelihood, min_L, max_L)
-    geneset_histogram = np.asarray(extract_histogram_empirical(geneset_df))
+    geneset_histogram = np.array(extract_histogram_empirical(geneset_df), dtype=float)
     geneset_count = len(geneset_df)
     if geneset == "all":
         ones = np.ones_like(geneset_histogram)
-        ones[np.isnan(geneset_df)] = np.nan
+        ones[np.isnan(geneset_histogram)] = np.nan
         return geneset_histogram, ones, ones
     all_df = load_filtered_df(demography, func, "all", likelihood, min_L, max_L)
     all_count = len(all_df)
-    all_histogram = np.asarray(extract_histogram_empirical(all_df))
+    all_histogram = np.array(extract_histogram_empirical(all_df), dtype=float)
     complement_histogram = all_histogram - geneset_histogram
     complement_count = all_count - geneset_count
 
@@ -196,7 +196,8 @@ def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
     c_ary = complement_histogram # in bin but not in bin
     d_ary = geneset_histogram # in geneset and in bin
 
-    odds_ratios = (a_ary * b_ary) / (c_ary * d_ary)
+    with np.errstate(divide='ignore'):
+        odds_ratios = (a_ary * b_ary) / (c_ary * d_ary)
 
     with np.nditer([a_ary, b_ary, c_ary, d_ary, None]) as it:
         for a, b, c, d, p_value in it:
