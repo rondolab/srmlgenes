@@ -177,43 +177,34 @@ def extract_histogram_empirical(filtered_df):
 
 @lru_cache(maxsize=None)
 def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
-    # TODO: Write inverted geneset selection!
-    geneset_df = load_filtered_df(demography, func, genelist, likelihood, min_L, max_L)
-    geneset_histogram = extract_histogram_empirical(geneset_df)
+    geneset_df = load_filtered_df(demography, func, geneset, likelihood, min_L, max_L)
+    geneset_histogram = np.asarray(extract_histogram_empirical(geneset_df))
     geneset_count = len(geneset_df)
     if geneset == "all":
-        ones = [[None, 1.0, 1.0, 1.0, 1.0],
-                [None, 1.0, 1.0, 1.0, 1.0],
-                [None, 1.0, 1.0, 1.0, 1.0],
-                [1.0,  1.0, 1.0, 1.0, 1.0]] # is this the right order? I'm not sure.
+        ones = np.ones_like(geneset_histogram)
+        ones[np.isnan(geneset_df)] = np.nan
         return geneset_histogram, ones, ones
     all_df = load_filtered_df(demography, func, "all", likelihood, min_L, max_L)
     all_count = len(all_df)
-    filtered_genes_count = len(filtered_df)
-    all_histogram = extract_histogram_empirical(all_df)
-    odds_ratios = []
-    p_values = []
-    for row_all, row_geneset in zip(all_histogram, geneset_histogram):
-        odds_ratio_row = []
-        p_value_row = []
-        for cell_count_all, cell_count_geneset in zip(row_all, row_geneset):
-            if cell_count_all is None or cell_count_geneset is None:
-                odds_ratio_row.append(None)
-                p_value_row.append(None)
-            else:
-                # construct a contingency table
-                a = all_genes_count - filtered_genes_count - value_unfiltered
-                b = value_unfiltered
-                c = filtered_genes_count - value_filtered
-                d = value_filtered
-                with np.errstate(divide='ignore'):
-                    odds_ratio = (a * b) / (c * d)
-                chi2, p, dof, expected = chi2_contingency([[a, b], [c, d]])
-                odds_ratio_row.append(odds_ratio)
-                p_value_row.append(p)
-        odds_ratios.append(odds_ratio_row)
-        p_values.append(p_value_row)
-    return filtered_histogram, odds_ratios, p_values
+    all_histogram = np.asarray(extract_histogram_empirical(all_df))
+    complement_histogram = all_histogram - geneset_histogram
+    complement_count = all_count - geneset_count
+
+    # contingency tables
+    a_ary = complement_count - complement_histogram # not in geneset and not in bin
+    b_ary = geneset_count - geneset_histogram # in geneset but not in bin
+    c_ary = complement_histogram # in bin but not in bin
+    d_ary = geneset_histogram # in geneset and in bin
+
+    odds_ratios = (a_ary * b_ary) / (c_ary * d_ary)
+
+    with np.nditer([a_ary, b_ary, c_ary, d_ary, None]) as it:
+        for a, b, c, d, p_value in it:
+            chi2, p, dof, expected = chi2_contingency([[a, b], [c, d]])
+            p_value[...] = p
+        p_values = it.operands[4]
+
+    return geneset_histogram, odds_ratios, p_values
 
 
 def load_filtered_df(demography, func, genelist, likelihood, min_L, max_L):
