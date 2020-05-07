@@ -196,8 +196,8 @@ def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
     c_ary = complement_histogram # in bin but not in bin
     d_ary = geneset_histogram # in geneset and in bin
 
-    with np.errstate(divide='ignore'):
-        odds_ratios = (a_ary * b_ary) / (c_ary * d_ary)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        odds_ratios = (a_ary * d_ary) / (b_ary * c_ary)
 
     with np.nditer([a_ary, b_ary, c_ary, d_ary, None]) as it:
         for a, b, c, d, p_value in it:
