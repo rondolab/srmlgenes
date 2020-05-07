@@ -13,6 +13,12 @@ app = create_app(__name__, __file__)
 
 app.layout = html.Div(children=[
                 dcc.Graph(id='heatmap', style={'height': '600px'}),
+                html.Label("Color Scheme"),
+                dcc.RadioItems(id="color-buttons",
+                               options=[{'label': 'Histogram', 'value': 'histogram'},
+                                        {'label': 'Enrichment (log odds ratio)', 'value': 'odds_ratio'},
+                                        {'label': 'Enrichment (p-value)', 'value': 'p_value'}],
+                               value='histogram'),
                 dcc.Dropdown(id="likelihood-dropdown",
                              options=[{'label': 'PRF', 'value': 'prf'},
                                       {'label': 'KDE (nearest)', 'value': 'kde_nearest'},
@@ -31,9 +37,10 @@ application = app.server
                Input('demography-dropdown', 'value'),
                Input('func-dropdown', 'value'),
                Input('geneset-dropdown', 'value'),
-               Input('L-slider', 'value')])
-def update_heatmap(likelihood, demography, func, geneset, Ls):
-    return make_heatmap_empirical(likelihood, demography, func, geneset, Ls[0], Ls[1])
+               Input('L-slider', 'value'),
+               Input('color-buttons', 'value')])
+def update_heatmap(likelihood, demography, func, geneset, Ls, z_variable):
+    return make_heatmap_empirical(likelihood, demography, func, geneset, Ls[0], Ls[1], z_variable)
 
 
 if __name__ == "__main__":
