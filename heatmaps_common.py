@@ -4,6 +4,7 @@ from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
+import flask
 import numpy as np
 from scipy.stats import chi2_contingency
 import pandas as pd
@@ -111,31 +112,51 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
     return extract_histogram_sims(df)
 
 
-def heatmap_figure(heatmap_data_row):
+def heatmap_figure(heatmap_data_row, z_variable="histogram"):
     total_genes = np.nansum(heatmap_data_row["histogram"])
-    try:
-        customdata = np.dstack((heatmap_data_row["frac"],
+    if z_variable == "histogram":
+        z = heatmap_data_row["histogram"]
+        try:
+            customdata = np.dstack((heatmap_data_row["frac"],
+                                    heatmap_data_row["odds_ratios"],
+                                    heatmap_data_row["p_values"]))
+            hovertemplate = f"""h: %{{y}}<br />
+s: %{{x}}<br />
+genes: %{{z}} / {total_genes} (%{{customdata[0]:.1%}})<br />
+enrichment: %{{customdata[1]:0.2f}} (p-value = %{{customdata[2]:0.2g}})<extra></extra>"""
+        except KeyError:
+            customdata = heatmap_data_row["frac"]
+            hovertemplate = f"""h: %{{y}}<br />
+s: %{{x}}<br />
+genes: %{{z}} / {total_genes} (%{{customdata:.1%}})<extra></extra>"""
+        extra_args = {}
+    else:
+        customdata = np.dstack((heatmap_data_row["histogram"],
+                                heatmap_data_row["frac"],
                                 heatmap_data_row["odds_ratios"],
                                 heatmap_data_row["p_values"]))
         hovertemplate = f"""h: %{{y}}<br />
-                            s: %{{x}}<br />
-                            genes: %{{z}} / {total_genes} (%{{customdata[0]:.1%}})<br />
-                            enrichment: %{{customdata[1]:0.2f}} (p-value = %{{customdata[1]:0.2f}}<extra></extra>"""
-    except KeyError:
-        customdata = heatmap_data_row["frac"]
-        hovertemplate = f"""h: %{{y}}<br />
-                                    s: %{{x}}<br />
-                                    genes: %{{z}} / {total_genes} (%{{customdata:.1%}})<extra></extra>"""
+s: %{{x}}<br />
+genes: %{{customdata[0]}} / {total_genes} (%{{customdata[1]:.1%}})<br />
+enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra></extra>"""
+        extra_args = { 'colorscale' : 'RdBu', 'zmid': 0}
+        if z_variable == "p_value":
+            z = np.sign(np.log(heatmap_data_row["odds_ratios"])) * -np.log10(heatmap_data_row["p_values"])
+        elif z_variable == "odds_ratio":
+            z = np.log(heatmap_data_row["odds_ratios"])
+        else:
+            raise ValueError(f"Unrecognized z variable {z_variable}")
 
     fig = go.Figure(data=go.Heatmap(
-                        z=heatmap_data_row["histogram"],
+                        z=z,
                         x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
                         y=["0.0", "0.1", "0.3", "0.5"],
                         customdata=customdata,
                         hoverongaps=False,
                         hovertemplate=hovertemplate,
+                        **extra_args),
                     layout=go.Layout(width=800, height=600,
-                xaxis_type='category', yaxis_type='category')))
+                    xaxis_type='category', yaxis_type='category'))
     return fig
 
 
@@ -218,7 +239,9 @@ def create_app(app_name, app_filename):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     app_path = Path(app_filename)
     app_url = PurePosixPath('/', app_path.parent.name, app_path.name)
-    app = dash.Dash(app_name, external_stylesheets=external_stylesheets,
+    server = flask.Flask(app_name)
+    server.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+    app = dash.Dash(server=server, external_stylesheets=external_stylesheets,
                     requests_pathname_prefix=quote(str(app_url) + "/"))
     if "dev" in __file__:
         app.enable_dev_tools(debug=True)
@@ -314,11 +337,11 @@ def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, m
     return heatmap_figure(rows[0])
 
 
-def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L):
+def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L, z_variable="histogram"):
     table = HEATMAP_TABLES_FILE.root.heatmaps.exac
     rows = table.read_where(f"""(likelihood     == {LIKELIHOOD_ENUM[likelihood]}) & \
                                 (ref_demography == {DEMOGRAPHY_ENUM[demography]}) & \
                                 (func           == {FUNC_ENUM[func]}) & \
                                 (geneset        == {GENESET_ENUM[genelist]}) & \
                                 (min_L == {min_L:.1f}) & (max_L == {max_L:.1f})""")
-    return heatmap_figure(rows[0])
+    return heatmap_figure(rows[0], z_variable)
