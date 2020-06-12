@@ -123,7 +123,7 @@ def heatmap_figure(heatmap_data_row, z_variable="histogram"):
 s: %{{x}}<br />
 genes: %{{z}} / {total_genes} (%{{customdata[0]:.1%}})<br />
 enrichment: %{{customdata[1]:0.2f}} (p-value = %{{customdata[2]:0.2g}})<extra></extra>"""
-        except KeyError:
+        except ValueError:
             customdata = heatmap_data_row["frac"]
             hovertemplate = f"""h: %{{y}}<br />
 s: %{{x}}<br />
