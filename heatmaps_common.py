@@ -36,7 +36,7 @@ DEMOGRAPHIES = ['tennessen', 'supertennessen']
 S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
 H_VALUES = ['0.0', '0.1', '0.3', '0.5']
 FUNCS = ['LOF_probably', 'synon']
-GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR']
+GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR', 'CGD_AR_2020']
 
 FUNC_LENGTH_TABLES = {}
 GENESETS_DICT = {}
@@ -252,10 +252,12 @@ def gene_select_controls():
         dcc.Dropdown(id="geneset-dropdown",
                      options=[{'label': 'All genes', 'value': 'all'},
                               {'label': 'HI > 80%', 'value': 'haplo_Hurles_80'},
-                              {'label': 'CGD AD', 'value': 'CGD_AD'},
+                              {'label': 'CGD AD (old)', 'value': 'CGD_AD'},
+                              {'label': 'CGD AD', 'value': 'CGD_AD_2020'},
                               {'label': 'Inbred', 'value': 'inbred_ALL'},
                               {'label': 'HI < 20%', 'value': 'haplo_Hurles_low20'},
-                              {'label': 'CGD AR', 'value': 'CGD_AR'}],
+                              {'label': 'CGD AR (old)', 'value': 'CGD_AR'},
+                              {'label': 'CGD AR', 'value': 'CGD_AR_2020'}],
                      value='all', style={'width': '7em', 'display': 'inline-block'}),
         dcc.Dropdown(id="func-dropdown",
                      options=[{'label': "LOF + PolyPhen probably", 'value': 'LOF_probably'},
