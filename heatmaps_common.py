@@ -46,8 +46,8 @@ class DataFileWarning(UserWarning):
 
 try:
     HEATMAP_TABLES_FILE = tables.open_file(HEATMAP_TABLES_PATH)
-except IOError:
-    warnings.warn(f"Heatmap hdf5 table not found (looking in {HEATMAP_TABLES_PATH})", DataFileWarning)
+except (IOError, tables.HDF5ExtError):
+    warnings.warn(f"Heatmap hdf5 table can't be loaded (looking in {HEATMAP_TABLES_PATH})", DataFileWarning)
 
 try:
     EXAC_SUMSTATS_TABLE = pd.read_table(EXAC_SUMSTATS_PATH)
