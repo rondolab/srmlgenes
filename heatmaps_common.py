@@ -197,7 +197,7 @@ def extract_histogram_empirical(filtered_df):
 
 @lru_cache(maxsize=None)
 def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
-    from scipy import chi2_contingency
+    from scipy.stats import chi2_contingency
     geneset_df = load_filtered_df(demography, func, geneset, likelihood, min_L, max_L)
     geneset_histogram = np.array(extract_histogram_empirical(geneset_df), dtype=float)
     geneset_count = len(geneset_df)

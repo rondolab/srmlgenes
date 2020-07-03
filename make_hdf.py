@@ -59,15 +59,15 @@ def main(output, n_jobs, truncate, include_single_sims, include_geneset_sims, in
         # index tables
         for col_name in tqdm(["likelihood", "ref_demography", "sim_demography", "s", "h", "L"],
                              desc="indexing simulated_single table"):
-            heatmaps_group.simulated_single.col(col_name).create_index()
+            heatmaps_group.simulated_single.colinstances[col_name].create_index()
         for col_name in tqdm(["likelihood", "ref_demography", "sim_demography", "s", "h",
                               "func", "geneset", "min_L", "max_L"],
                              desc="indexing simulated_geneset table"):
-            heatmaps_group.simulated_geneset.col(col_name).create_index()
+            heatmaps_group.simulated_geneset.colinstances[col_name].create_index()
         for col_name in tqdm(["likelihood", "ref_demography",
                               "func", "geneset", "min_L", "max_L"],
                              desc="indexing exac table"):
-            heatmaps_group.exac.col(col_name).create_index()
+            heatmaps_group.exac.colinstances[col_name].create_index()
 
 
 def load_heatmap(kind, *args):
