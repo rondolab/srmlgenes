@@ -116,7 +116,7 @@ def heatmap_figure(heatmap_data_row, z_variable="histogram"):
     if z_variable == "histogram":
         z = heatmap_data_row["histogram"]
         zmin = 0
-        zmax = total_genes
+        zmax = total_genes*0.3
         try:
             customdata = np.dstack((heatmap_data_row["frac"],
                                     heatmap_data_row["odds_ratios"],
@@ -143,8 +143,8 @@ enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra><
         extra_args = { 'colorscale' : 'RdBu', 'zmid': 0}
         if z_variable == "p_value":
             z = np.sign(np.log(heatmap_data_row["odds_ratios"])) * -np.log10(heatmap_data_row["p_values"])
-            zmin = -8.0
-            zmax = 8.0
+            zmin = -10.0
+            zmax = 10.0
         elif z_variable == "odds_ratio":
             z = np.log(heatmap_data_row["odds_ratios"])
             zmin = -1.5

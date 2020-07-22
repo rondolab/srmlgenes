@@ -27,7 +27,7 @@ app.layout = html.Div(children=[
                 dcc.Dropdown(id="demography-dropdown",
                              options=[{'label': 'Tennessen reference', 'value': 'tennessen'},
                                       {'label': 'Super-Tennessen reference', 'value': 'supertennessen'}],
-                             value='tennessen', style={'width': '15em', 'display': 'inline-block'})] +\
+                             value='supertennessen', style={'width': '15em', 'display': 'inline-block'})] +\
                 gene_select_controls(), style={'width': '800px'})
 application = app.server
 
