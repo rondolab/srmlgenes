@@ -115,6 +115,8 @@ def heatmap_figure(heatmap_data_row, z_variable="histogram"):
     total_genes = np.nansum(heatmap_data_row["histogram"])
     if z_variable == "histogram":
         z = heatmap_data_row["histogram"]
+        zmin = 0
+        zmax = total_genes
         try:
             customdata = np.dstack((heatmap_data_row["frac"],
                                     heatmap_data_row["odds_ratios"],
@@ -141,8 +143,12 @@ enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra><
         extra_args = { 'colorscale' : 'RdBu', 'zmid': 0}
         if z_variable == "p_value":
             z = np.sign(np.log(heatmap_data_row["odds_ratios"])) * -np.log10(heatmap_data_row["p_values"])
+            zmin = -8.0
+            zmax = 8.0
         elif z_variable == "odds_ratio":
             z = np.log(heatmap_data_row["odds_ratios"])
+            zmin = -1.5
+            zmax = 1.5
         else:
             raise ValueError(f"Unrecognized z variable {z_variable}")
 
@@ -150,6 +156,8 @@ enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra><
                         z=z,
                         x=['Neutral', '-10⁻⁴', '-10⁻³', '-10⁻²', '-10⁻¹'],
                         y=["0.0", "0.1", "0.3", "0.5"],
+                        zmin=zmin,
+                        zmax=zmax,
                         customdata=customdata,
                         hoverongaps=False,
                         hovertemplate=hovertemplate,
