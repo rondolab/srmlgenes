@@ -123,13 +123,13 @@ def heatmap_figure(heatmap_data_row, z_variable="histogram"):
                                     heatmap_data_row["p_values"]))
             hovertemplate = f"""h: %{{y}}<br />
 s: %{{x}}<br />
-genes: %{{z}} / {total_genes} (%{{customdata[0]:.1%}})<br />
+genes: %{{z}} / {total_genes:0.0f} (%{{customdata[0]:.1%}})<br />
 enrichment: %{{customdata[1]:0.2f}} (p-value = %{{customdata[2]:0.2g}})<extra></extra>"""
         except ValueError:
             customdata = heatmap_data_row["frac"]
             hovertemplate = f"""h: %{{y}}<br />
 s: %{{x}}<br />
-genes: %{{z}} / {total_genes} (%{{customdata:.1%}})<extra></extra>"""
+genes: %{{z}} / {total_genes:0.0f} (%{{customdata:.1%}})<extra></extra>"""
         extra_args = {}
     else:
         customdata = np.dstack((heatmap_data_row["histogram"],
@@ -138,15 +138,20 @@ genes: %{{z}} / {total_genes} (%{{customdata:.1%}})<extra></extra>"""
                                 heatmap_data_row["p_values"]))
         hovertemplate = f"""h: %{{y}}<br />
 s: %{{x}}<br />
-genes: %{{customdata[0]}} / {total_genes} (%{{customdata[1]:.1%}})<br />
+genes: %{{customdata[0]}} / {total_genes:0.0f} (%{{customdata[1]:.1%}})<br />
 enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra></extra>"""
         extra_args = { 'colorscale' : 'RdBu', 'zmid': 0}
+        with np.errstate(divide="ignore"):
+            log_oddsratio = np.log(heatmap_data_row["odds_ratios"])
+            log_oddsratio[log_oddsratio == -np.inf] = -10.0
+            
         if z_variable == "p_value":
-            z = np.sign(np.log(heatmap_data_row["odds_ratios"])) * -np.log10(heatmap_data_row["p_values"])
+            #z = np.sign(np.log(heatmap_data_row["odds_ratios"])) * -np.log10(heatmap_data_row["p_values"])
+            z = np.copysign(np.log10(heatmap_data_row["p_values"]), log_oddsratio)
             zmin = -10.0
             zmax = 10.0
         elif z_variable == "odds_ratio":
-            z = np.log(heatmap_data_row["odds_ratios"])
+            z = log_oddsratio
             zmin = -1.5
             zmax = 1.5
         else:
