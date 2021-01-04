@@ -30,8 +30,8 @@ application = app.server
                Input('geneset-dropdown', 'value'),
                Input('L-slider', 'value'),
                Input('color-buttons', 'value')])
-def update_heatmap(likelihood, demography, func, geneset, Ls, z_variable):
-    return make_heatmap_empirical(likelihood, demography, func, geneset, Ls[0], Ls[1], z_variable)
+def update_heatmap(func, geneset, Ls, z_variable):
+    return make_heatmap_empirical("prf", "supertennessen", func, geneset, Ls[0], Ls[1], z_variable)
 
 
 if __name__ == "__main__":

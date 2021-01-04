@@ -58,22 +58,19 @@ s_labels = ["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"]
 
 
 @app.callback(Output('heatmap', 'figure'), 
-              [Input('likelihood-dropdown', 'value'),
-               Input('ref-dropdown', 'value'),
-               Input('sim-dropdown', 'value'),
-               Input('h-slider', 'value'),
+              [Input('h-slider', 'value'),
                Input('s-slider', 'value'),
                Input('func-dropdown', 'value'),
                Input('geneset-dropdown', 'value'),
                Input('L-slider', 'value'),
                Input('L-slider-single', 'value'),
                Input('L-select-mode', 'value')])
-def update_heatmap(likelihood, ref, sim, h_idx, s_idx, func, geneset, L_boundaries, single_L, L_mode):
+def update_heatmap(h_idx, s_idx, func, geneset, L_boundaries, single_L, L_mode):
     if L_mode == "single":
-        return make_heatmap_single_sim(likelihood, ref, sim, s_labels[s_idx], h_labels[h_idx], single_L)
+        return make_heatmap_single_sim("prf", "supertennessen", "supertennessen", s_labels[s_idx], h_labels[h_idx], single_L)
     elif L_mode == "empirical":
         L_boundaries = np.clip(L_boundaries, 2.0, 5.0)
-        return make_heatmap_geneset_sim(likelihood, ref, sim, s_labels[s_idx], h_labels[h_idx],
+        return make_heatmap_geneset_sim("prf", "supertennessen", "supertennessen", s_labels[s_idx], h_labels[h_idx],
                                         func, geneset, L_boundaries[0], L_boundaries[1])
     else:
         raise ValueError(f"Unknown L selection mode {L_mode}")
