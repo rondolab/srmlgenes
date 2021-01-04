@@ -18,16 +18,7 @@ app.layout = html.Div(children=[
                                options=[{'label': 'Histogram', 'value': 'histogram'},
                                         {'label': 'Enrichment (log odds ratio)', 'value': 'odds_ratio'},
                                         {'label': 'Enrichment (p-value)', 'value': 'p_value'}],
-                               value='histogram'),
-                dcc.Dropdown(id="likelihood-dropdown",
-                             options=[{'label': 'PRF', 'value': 'prf'},
-                                      {'label': 'KDE (nearest)', 'value': 'kde_nearest'},
-                                      {'label': 'KDE (3D)', 'value': 'kde'}],
-                             value='prf', style={'width': '9em', 'display': 'inline-block'}),
-                dcc.Dropdown(id="demography-dropdown",
-                             options=[{'label': 'Tennessen reference', 'value': 'tennessen'},
-                                      {'label': 'Super-Tennessen reference', 'value': 'supertennessen'}],
-                             value='supertennessen', style={'width': '15em', 'display': 'inline-block'})] +\
+                               value='histogram')] +
                 gene_select_controls(), style={'width': '800px'})
 application = app.server
 
