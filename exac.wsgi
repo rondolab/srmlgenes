@@ -24,9 +24,7 @@ application = app.server
 
 
 @app.callback(Output('heatmap', 'figure'), 
-              [Input('likelihood-dropdown', 'value'),
-               Input('demography-dropdown', 'value'),
-               Input('func-dropdown', 'value'),
+              [Input('func-dropdown', 'value'),
                Input('geneset-dropdown', 'value'),
                Input('L-slider', 'value'),
                Input('color-buttons', 'value')])
