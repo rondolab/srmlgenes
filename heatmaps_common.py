@@ -7,7 +7,6 @@ from urllib.parse import quote
 import flask
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 import tables
 from plotly import graph_objects as go
 import dash
