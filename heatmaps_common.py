@@ -7,6 +7,7 @@ from urllib.parse import quote
 import flask
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 import tables
 from plotly import graph_objects as go
 import dash
@@ -210,7 +211,6 @@ def extract_histogram_empirical(filtered_df):
 
 @lru_cache(maxsize=None)
 def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
-    from scipy.stats import chi2_contingency
     geneset_df = load_filtered_df(demography, func, geneset, likelihood, min_L, max_L)
     geneset_histogram = np.array(extract_histogram_empirical(geneset_df), dtype=float)
     geneset_count = len(geneset_df)
@@ -235,8 +235,9 @@ def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
 
     with np.nditer([a_ary, b_ary, c_ary, d_ary, None]) as it:
         for a, b, c, d, p_value in it:
+            table = sm.Table2x2([[a, b], [c, d]])
             chi2, p, dof, expected = chi2_contingency([[a, b], [c, d]])
-            p_value[...] = p
+            p_value[...] = table.test_nominal_association().pvalue
         p_values = it.operands[4]
 
     return geneset_histogram, odds_ratios, p_values
@@ -327,36 +328,32 @@ class EmpiricalHeatmap(HeatmapBase, GeneSelectionMixin):
     odds_ratios = tables.Float64Col(shape=(4,5), pos=ENRICHMENT_OFFSET+0)
     p_values = tables.Float64Col(shape=(4,5), pos=ENRICHMENT_OFFSET+1)
 
+def get_null_histogram():
+    histogram = np.zeros((4,5))
+    histogram[:-1,0] = np.nan
+    return histogram
 
 def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
-    table = HEATMAP_TABLES_FILE.root.heatmaps.simulated_single
-    rows = table.read_where(f"""(likelihood     == {LIKELIHOOD_ENUM[likelihood]}) & \
-                               (ref_demography == {DEMOGRAPHY_ENUM[ref]}) & \
-                               (sim_demography == {DEMOGRAPHY_ENUM[sim]}) & \
-                               (s              == {S_ENUM[s]}) & \
-                               (h              == {H_ENUM[h]}) & \
-                               (L              == {L:.1f})""")
-    return heatmap_figure(rows[0])
+    data = load_sim_data(likelihood, ref, sim, s, h, L)
+    return heatmap_figure(data)
 
 
 def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, max_L):
-    table = HEATMAP_TABLES_FILE.root.heatmaps.simulated_geneset
-    rows = table.read_where(f"""(likelihood     == {LIKELIHOOD_ENUM[likelihood]}) & \
-                                (ref_demography == {DEMOGRAPHY_ENUM[ref]}) & \
-                                (sim_demography == {DEMOGRAPHY_ENUM[sim]}) & \
-                                (s              == {S_ENUM[s]}) & \
-                                (h              == {H_ENUM[h]}) & \
-                                (func           == {FUNC_ENUM[func]}) & \
-                                (geneset        == {GENESET_ENUM[geneset]}) & \
-                                (min_L == {min_L:.1f}) & (max_L == {max_L:.1f})""")
-    return heatmap_figure(rows[0])
+    filtered_df = load_filtered_df(ref, func, geneset, likelihood, min_L, max_L)
+    L = filtered_df.U.transform('log10') + 8.0
+    try:
+        return load_sim_data(likelihood, ref, sim, s, h, L)
+    except ValueError:
+        return get_null_histogram()
 
 
 def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L, z_variable="histogram"):
-    table = HEATMAP_TABLES_FILE.root.heatmaps.exac
-    rows = table.read_where(f"""(likelihood     == {LIKELIHOOD_ENUM[likelihood]}) & \
-                                (ref_demography == {DEMOGRAPHY_ENUM[demography]}) & \
-                                (func           == {FUNC_ENUM[func]}) & \
-                                (geneset        == {GENESET_ENUM[genelist]}) & \
-                                (min_L == {min_L:.1f}) & (max_L == {max_L:.1f})""")
-    return heatmap_figure(rows[0], z_variable)
+    try:
+        histogram, odds_ratio, p_value = load_exac_data(likelihood, demography, func, geneset, min_L, max_L)
+    except ValueError:
+        histogram = get_null_histogram()
+        odds_ratio = get_null_histogram()
+        p_value = get_null_histogram()
+    return heatmap_figure({"histogram": histogram,
+                           "odds_ratio": odds_ratio,
+                           "p_value": p_value}, z_variable)
