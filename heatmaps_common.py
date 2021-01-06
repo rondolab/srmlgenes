@@ -334,16 +334,17 @@ def get_null_histogram():
 
 def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
     data = load_sim_data(likelihood, ref, sim, s, h, L)
-    return heatmap_figure(data)
+    return heatmap_figure({'histogram': data})
 
 
 def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, max_L):
     filtered_df = load_filtered_df(ref, func, geneset, likelihood, min_L, max_L)
     L = filtered_df.U.transform('log10') + 8.0
     try:
-        return load_sim_data(likelihood, ref, sim, s, h, L)
+        histogram = load_sim_data(likelihood, ref, sim, s, h, L)
     except ValueError:
-        return get_null_histogram()
+        histogram = get_null_histogram()
+    return heatmap_figure({'histogram': histogram})
 
 
 def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L, z_variable="histogram"):
