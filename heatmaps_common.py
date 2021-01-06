@@ -15,7 +15,7 @@ import dash_html_components as html
 
 BASE_DIR = "/sc/arion/projects/GENECAD/04_dominance"
 HEATMAP_TABLES_PATH = os.path.join(os.path.dirname(__file__), "heatmaps.hdf5")
-SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "genedose", "simulation_inference_{likelihood}", "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L}.tsv")
+SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "genedose", "simulation_inference_{likelihood}", "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L:.1f}.tsv")
 EXAC_SUMSTATS_PATH = os.path.join(BASE_DIR, "genedose", "ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
 
 LIKELIHOOD_FILES = {('kde_nearest', 'tennessen') : "ExAC_kde_inference_nearest.20200130.tsv",
@@ -333,7 +333,7 @@ def get_null_histogram():
     return histogram
 
 def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
-    data = load_sim_data(likelihood, ref, sim, s, h, np.log10(L))
+    data = load_sim_data(likelihood, ref, sim, s, h, L)
     return heatmap_figure(data)
 
 
@@ -341,14 +341,14 @@ def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, m
     filtered_df = load_filtered_df(ref, func, geneset, likelihood, min_L, max_L)
     L = filtered_df.U.transform('log10') + 8.0
     try:
-        return load_sim_data(likelihood, ref, sim, s, h, np.log10(L))
+        return load_sim_data(likelihood, ref, sim, s, h, L)
     except ValueError:
         return get_null_histogram()
 
 
 def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L, z_variable="histogram"):
     try:
-        histogram, odds_ratio, p_value = load_exac_data(likelihood, demography, func, geneset, np.log10(min_L), np.log10(max_L))
+        histogram, odds_ratio, p_value = load_exac_data(likelihood, demography, func, geneset, min_L, max_L)
     except ValueError:
         histogram = get_null_histogram()
         odds_ratio = get_null_histogram()
