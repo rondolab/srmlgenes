@@ -12,6 +12,7 @@ from plotly import graph_objects as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import mpmath
 
 BASE_DIR = "/sc/arion/projects/GENECAD/04_dominance"
 HEATMAP_TABLES_PATH = os.path.join(os.path.dirname(__file__), "heatmaps.hdf5")
@@ -234,9 +235,13 @@ def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
 
     with np.nditer([a_ary, b_ary, c_ary, d_ary, None]) as it:
         for a, b, c, d, p_value in it:
-            table = sm.Table2x2([[a, b], [c, d]])
-            chi2, p, dof, expected = chi2_contingency([[a, b], [c, d]])
-            p_value[...] = table.test_nominal_association().pvalue
+            table = np.array([[a,b], [c,d]])
+            expected =  table.sum(axis=1)[:,np.newaxis] * \
+                        table.sum(axis=0)[np.newaxis,:] / \
+                        table.sum()
+            chi2 = np.sum((table - expected)**2 / expected)
+            p = 1 - mpmath.gammainc(1/2, chi2/2, regularized=True)
+            p_value[...] = p
         p_values = it.operands[4]
 
     return geneset_histogram, odds_ratios, p_values
