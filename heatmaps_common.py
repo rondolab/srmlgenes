@@ -84,9 +84,9 @@ def extract_histogram_sims(df):
     crosstab = pd.crosstab(ml_h, ml_s)
     counts_grid = crosstab.reindex(["0.0", "0.1", "0.3", "0.5"], fill_value=0, axis=0)\
                           .reindex(["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"], fill_value=0, axis=1)\
-                          .values.tolist()
+                          .astype(float).values#.tolist()
     for h_index in 0, 1, 2:
-        counts_grid[h_index][0] = None
+        counts_grid[h_index,0] = np.nan # None
     return counts_grid
 
 
@@ -125,7 +125,7 @@ def heatmap_figure(heatmap_data_row, z_variable="histogram"):
 s: %{{x}}<br />
 genes: %{{z}} / {total_genes:0.0f} (%{{customdata[0]:.1%}})<br />
 enrichment: %{{customdata[1]:0.2f}} (p-value = %{{customdata[2]:0.2g}})<extra></extra>"""
-        except ValueError:
+        except (ValueError, KeyError):
             customdata = heatmap_data_row["frac"]
             hovertemplate = f"""h: %{{y}}<br />
 s: %{{x}}<br />
@@ -333,8 +333,11 @@ def get_null_histogram():
     return histogram
 
 def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
-    data = load_sim_data(likelihood, ref, sim, s, h, L)
-    return heatmap_figure({'histogram': data})
+    histogram = load_sim_data(likelihood, ref, sim, s, h, L)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        frac = histogram / np.nansum(histogram)
+    return heatmap_figure({'histogram': histogram,
+                           'frac': frac})
 
 
 def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, max_L):
@@ -344,7 +347,10 @@ def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, m
         histogram = load_sim_data(likelihood, ref, sim, s, h, L)
     except ValueError:
         histogram = get_null_histogram()
-    return heatmap_figure({'histogram': histogram})
+    with np.errstate(divide="ignore", invalid="ignore"):
+        frac = histogram / np.nansum(histogram)
+    return heatmap_figure({'histogram': histogram,
+                           "frac": frac})
 
 
 def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L, z_variable="histogram"):
@@ -354,6 +360,9 @@ def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L,
         histogram = get_null_histogram()
         odds_ratio = get_null_histogram()
         p_value = get_null_histogram()
+    with np.errstate(divide="ignore", invalid="ignore"):
+        frac = histogram / np.nansum(histogram)
     return heatmap_figure({"histogram": histogram,
-                           "odds_ratio": odds_ratio,
-                           "p_value": p_value}, z_variable)
+                           "frac": frac,
+                           "odds_ratios": odds_ratio,
+                           "p_values": p_value}, z_variable)
