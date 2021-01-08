@@ -240,7 +240,7 @@ def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
                         table.sum(axis=0)[np.newaxis,:] / \
                         table.sum()
             chi2 = np.sum((table - expected)**2 / expected)
-            p = 1 - mpmath.gammainc(1/2, chi2/2, regularized=True)
+            p = mpmath.gammainc(1/2, chi2/2, regularized=True)
             p_value[...] = p
         p_values = it.operands[4]
 
@@ -360,7 +360,7 @@ def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, m
 
 def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L, z_variable="histogram"):
     try:
-        histogram, odds_ratio, p_value = load_exac_data(likelihood, demography, func, geneset, min_L, max_L)
+        histogram, odds_ratio, p_value = load_exac_data(likelihood, demography, func, genelist, min_L, max_L)
     except ValueError:
         histogram = get_null_histogram()
         odds_ratio = get_null_histogram()
