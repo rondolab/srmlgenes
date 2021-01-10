@@ -7,7 +7,6 @@ from urllib.parse import quote
 import flask
 import numpy as np
 import pandas as pd
-import tables
 from plotly import graph_objects as go
 import dash
 import dash_core_components as dcc
@@ -15,52 +14,36 @@ import dash_html_components as html
 import mpmath
 
 BASE_DIR = "/sc/arion/projects/GENECAD/04_dominance"
-HEATMAP_TABLES_PATH = os.path.join(os.path.dirname(__file__), "heatmaps.hdf5")
-SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "genedose", "simulation_inference_{likelihood}", "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L:.1f}.tsv")
+SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "genedose", "simulation_inference_{likelihood}",
+                                 "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L:.1f}.tsv")
 EXAC_SUMSTATS_PATH = os.path.join(BASE_DIR, "genedose", "ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
 
-LIKELIHOOD_FILES = {('kde_nearest', 'tennessen') : "ExAC_kde_inference_nearest.20200130.tsv",
-                    ('kde_nearest', 'supertennessen') : "ExAC_63K_kde_nearest_nolscale_supertennessen_inference.tsv",
-                    ('kde_nearest', 'subtennessen') : "kde_nearest_nolscale_exac_inference_subtennessen.tsv",
-                    ('kde_3d', 'tennessen') : "ExAC_kde_inference_3d.20200124.tsv",
-                    ('kde_3d', 'supertennessen') : "ExAC_63K_kde_3d_nolscale_supertennessen_inference.tsv",
-                    ('kde_3d', 'subtennessen') : "kde_3d_nolscale_exac_inference_subtennessen.tsv",
-                    ('kde', 'tennessen') : "ExAC_kde_inference_3d.20200124.tsv",
-                    ('kde', 'supertennessen') : "ExAC_63K_kde_3d_nolscale_supertennessen_inference.tsv",
-                    ('kde', 'subtennessen') : "kde_3d_nolscale_exac_inference_subtennessen.tsv",
-                    ('prf', 'tennessen') : "ExAC_prf_inference.20191212.tsv",
-                    ('prf', 'supertennessen') : "ExAC_63K_prf_supertennessen_inference.tsv",
-                    ('prf', 'subtennessen') : "ExAC_63K_prf_subtennessen_inference.tsv"}
+LIKELIHOOD_FILES = {('kde_nearest', 'tennessen'): "ExAC_kde_inference_nearest.20200130.tsv",
+                    ('kde_nearest', 'supertennessen'): "ExAC_63K_kde_nearest_nolscale_supertennessen_inference.tsv",
+                    ('kde_nearest', 'subtennessen'): "kde_nearest_nolscale_exac_inference_subtennessen.tsv",
+                    ('kde_3d', 'tennessen'): "ExAC_kde_inference_3d.20200124.tsv",
+                    ('kde_3d', 'supertennessen'): "ExAC_63K_kde_3d_nolscale_supertennessen_inference.tsv",
+                    ('kde_3d', 'subtennessen'): "kde_3d_nolscale_exac_inference_subtennessen.tsv",
+                    ('kde', 'tennessen'): "ExAC_kde_inference_3d.20200124.tsv",
+                    ('kde', 'supertennessen'): "ExAC_63K_kde_3d_nolscale_supertennessen_inference.tsv",
+                    ('kde', 'subtennessen'): "kde_3d_nolscale_exac_inference_subtennessen.tsv",
+                    ('prf', 'tennessen'): "ExAC_prf_inference.20191212.tsv",
+                    ('prf', 'supertennessen'): "ExAC_63K_prf_supertennessen_inference.tsv",
+                    ('prf', 'subtennessen'): "ExAC_63K_prf_subtennessen_inference.tsv"}
 
 LIKELIHOODS = ['prf', 'kde', 'kde_nearest']
 DEMOGRAPHIES = ['tennessen', 'supertennessen']
 S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
 H_VALUES = ['0.0', '0.1', '0.3', '0.5']
 FUNCS = ['LOF_probably', 'synon']
-GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR', 'CGD_AR_2020']
+GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020']
 
-FUNC_LENGTH_TABLES = {}
 GENESETS_DICT = {}
+
 
 class DataFileWarning(UserWarning):
     pass
 
-try:
-    HEATMAP_TABLES_FILE = tables.open_file(HEATMAP_TABLES_PATH)
-except (IOError, tables.HDF5ExtError):
-    warnings.warn(f"Heatmap hdf5 table can't be loaded (looking in {HEATMAP_TABLES_PATH})", DataFileWarning)
-
-try:
-    EXAC_SUMSTATS_TABLE = pd.read_table(EXAC_SUMSTATS_PATH)
-except FileNotFoundError:
-    warnings.warn(f"ExAC summary stats table not found (looking in {EXAC_SUMSTATS_PATH})", DataFileWarning)
-else:
-    for func in FUNCS:
-        FUNC_LENGTH_TABLES[func] = EXAC_SUMSTATS_TABLE.loc[EXAC_SUMSTATS_TABLE.func == func, "L"] \
-            .transform('log10') \
-            .round(1) \
-            .clip(2.0, 5.0) \
-            .value_counts()
 
 geneset_base_dir = os.path.join(BASE_DIR, "slim", "mock_genome")
 
@@ -85,13 +68,13 @@ def extract_histogram_sims(df):
     crosstab = pd.crosstab(ml_h, ml_s)
     counts_grid = crosstab.reindex(["0.0", "0.1", "0.3", "0.5"], fill_value=0, axis=0)\
                           .reindex(["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"], fill_value=0, axis=1)\
-                          .astype(float).values#.tolist()
+                          .astype(float).values
     for h_index in 0, 1, 2:
-        counts_grid[h_index,0] = np.nan # None
+        counts_grid[h_index, 0] = np.nan
     return counts_grid
 
 
-#@lru_cache(maxsize=None)
+@lru_cache(maxsize=None)
 def load_sim_data(likelihood, ref, sim, s, h, L):
     if isinstance(L, pd.Series):
         sims_to_concat = []
@@ -141,13 +124,12 @@ genes: %{{z}} / {total_genes:0.0f} (%{{customdata:.1%}})<extra></extra>"""
 s: %{{x}}<br />
 genes: %{{customdata[0]}} / {total_genes:0.0f} (%{{customdata[1]:.1%}})<br />
 enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra></extra>"""
-        extra_args = { 'colorscale' : 'RdBu', 'zmid': 0}
+        extra_args = { 'colorscale': 'RdBu', 'zmid': 0}
         with np.errstate(divide="ignore"):
             log_oddsratio = np.log(heatmap_data_row["odds_ratios"])
             log_oddsratio[log_oddsratio == -np.inf] = -10.0
             
         if z_variable == "p_value":
-            #z = np.sign(np.log(heatmap_data_row["odds_ratios"])) * -np.log10(heatmap_data_row["p_values"])
             z = np.copysign(np.log10(heatmap_data_row["p_values"]), log_oddsratio)
             zmin = -10.0
             zmax = 10.0
@@ -265,6 +247,7 @@ def create_app(app_name, app_filename):
         app.enable_dev_tools(debug=True)
     return app
 
+
 def gene_select_controls():
     return [
         dcc.Dropdown(id="geneset-dropdown",
@@ -288,54 +271,11 @@ def gene_select_controls():
     ]
 
 
-LIKELIHOOD_ENUM = tables.Enum(LIKELIHOODS)
-DEMOGRAPHY_ENUM = tables.Enum(DEMOGRAPHIES)
-S_ENUM = tables.Enum(S_VALUES)
-H_ENUM = tables.Enum(H_VALUES)
-FUNC_ENUM = tables.Enum(FUNCS)
-GENESET_ENUM = tables.Enum(GENESETS)
-BASE_OFFSET = 0
-SIM_OFFSET = 10
-GENE_OFFSET = 20
-DATA_OFFSET = 30
-ENRICHMENT_OFFSET = 40
-
-class HeatmapBase(tables.IsDescription):
-    histogram = tables.Float64Col(shape=(4,5), pos=DATA_OFFSET + 0)
-    frac = tables.Float64Col(shape=(4,5), pos=DATA_OFFSET + 1)
-    likelihood = tables.EnumCol(LIKELIHOOD_ENUM, "prf", base='uint8', pos=BASE_OFFSET + 0)
-    ref_demography = tables.EnumCol(DEMOGRAPHY_ENUM, "tennessen", base='uint8', pos=BASE_OFFSET + 1)
-
-
-class SimulationHeatmapBase(HeatmapBase):
-    sim_demography = tables.EnumCol(DEMOGRAPHY_ENUM, "tennessen", base='uint8', pos=SIM_OFFSET + 0)
-    s = tables.EnumCol(S_ENUM, "NEUTRAL", base='uint8', pos=SIM_OFFSET + 1)
-    h = tables.EnumCol(H_ENUM, "0.5", base='uint8', pos=SIM_OFFSET + 2)
-
-
-class GeneSelectionMixin(tables.IsDescription):
-    func = tables.EnumCol(FUNC_ENUM, "LOF_probably", base='uint8', pos=GENE_OFFSET + 0)
-    geneset = tables.EnumCol(GENESET_ENUM, "all", base='uint8', pos=GENE_OFFSET + 1)
-    min_L = tables.Float64Col(pos=GENE_OFFSET + 2)
-    max_L = tables.Float64Col(pos=GENE_OFFSET + 3)
-
-
-class SimulationHeatmapFixedLength(SimulationHeatmapBase):
-    L = tables.Float64Col(pos=GENE_OFFSET + 0)
-
-
-class SimulationHeatmapVariableLength(SimulationHeatmapBase, GeneSelectionMixin):
-    pass
-
-
-class EmpiricalHeatmap(HeatmapBase, GeneSelectionMixin):
-    odds_ratios = tables.Float64Col(shape=(4,5), pos=ENRICHMENT_OFFSET+0)
-    p_values = tables.Float64Col(shape=(4,5), pos=ENRICHMENT_OFFSET+1)
-
 def get_null_histogram():
     histogram = np.zeros((4,5))
     histogram[:-1,0] = np.nan
     return histogram
+
 
 def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
     histogram = load_sim_data(likelihood, ref, sim, s, h, L)
