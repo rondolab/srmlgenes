@@ -17,18 +17,24 @@ app.layout = html.Div(children=[
                 html.Label("h"), dcc.Slider(id="h-slider", min=0, max=3, 
                                             marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
                                             disabled=True, value=3),
+                html.Br(),
                 html.Label("s"), dcc.Slider(id="s-slider", min=0, max=4, 
                     marks={0: 'Neutral', 1: '-10⁻⁴', 2: '-10⁻³', 3: '-10⁻²', 4: '-10⁻¹'},
                                             value=0),
+                html.Br(),
                 dcc.RadioItems(id="L-select-mode",
                     options=[{'label': "Empirical length profile", 'value': 'empirical'},
                              {'label': "Single length", 'value': 'single'}], value='single'),
                 html.Div(id="L-select-single", children=[html.Label("L"), dcc.Slider(id="L-slider-single", min=2, max=5, step=0.1,
-                    marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
+                    marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵'},
                                             value=3,
                                             tooltip={'always_visible' : False})]),
                 html.Div(id="L-select-empirical", children=gene_select_controls())
-                ], style={'width': '800px'})
+                ], style={'width': '730px',
+                          'margin-left': '20px',
+                          'margin-right': '20px',
+                          'margin-top': '10px',
+                          'margin-bottom': '10px'})
 application = app.server
 
 

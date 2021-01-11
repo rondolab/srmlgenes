@@ -18,7 +18,11 @@ app.layout = html.Div(children=[
                                         {'label': 'Enrichment (log odds ratio)', 'value': 'odds_ratio'},
                                         {'label': 'Enrichment (p-value)', 'value': 'p_value'}],
                                value='histogram')] +
-                gene_select_controls(), style={'width': '800px'})
+                gene_select_controls(), style={'width': '730px',
+                          'margin-left': '20px',
+                          'margin-right': '20px',
+                          'margin-top': '10px',
+                          'margin-bottom': '10px'})
 application = app.server
 
 
