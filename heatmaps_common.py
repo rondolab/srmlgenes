@@ -13,7 +13,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import mpmath
 
-BASE_DIR = "dominance_data"
+BASE_DIR = os.path.join(os.path.dirname(__file__), "dominance_data")
 SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "sims",
                                  "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L:.1f}.tsv")
 EXAC_SUMSTATS_PATH = os.path.join(BASE_DIR, "ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
