@@ -260,9 +260,9 @@ def create_app(app_name, app_filename):
     return app
 
 
-def gene_select_controls():
+def gene_select_controls(id_suffix=""):
     return [
-        dcc.Dropdown(id="geneset-dropdown",
+        dcc.Dropdown(id="geneset-dropdown" + id_suffix,
                      options=[{'label': 'All genes', 'value': 'all'},
                               {'label': 'HI > 80%', 'value': 'haplo_Hurles_80'},
                               {'label': 'CGD AD (old)', 'value': 'CGD_AD'},
@@ -272,11 +272,11 @@ def gene_select_controls():
                               {'label': 'CGD AR (old)', 'value': 'CGD_AR'},
                               {'label': 'CGD AR', 'value': 'CGD_AR_2020'}],
                      value='all', style={'width': '7em', 'display': 'inline-block'}),
-        dcc.Dropdown(id="func-dropdown",
+        dcc.Dropdown(id="func-dropdown" + id_suffix,
                      options=[{'label': "LOF + PolyPhen probably", 'value': 'LOF_probably'},
                               {'label': "synonymous", 'value': 'synon'}],
                      value="LOF_probably", style={'width': '15em', 'display': 'inline-block'}),
-        html.Label("L"), dcc.RangeSlider(id="L-slider", min=0, max=6, step=0.1,
+        html.Label("L"), dcc.RangeSlider(id="L-slider" + id_suffix, min=0, max=6, step=0.1,
                                      marks={0: '10⁰', 1: '10¹', 2: '10²', 3: '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
                                      value=[2, 5],
                                      tooltip={'always_visible': False})
