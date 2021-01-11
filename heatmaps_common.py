@@ -1,6 +1,6 @@
 import os
 import warnings
-from functools import lru_cache
+from functools import lru_cache, wraps
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
@@ -13,26 +13,15 @@ import dash_core_components as dcc
 import dash_html_components as html
 import mpmath
 
-BASE_DIR = "/sc/arion/projects/GENECAD/04_dominance"
-SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "genedose", "simulation_inference_{likelihood}",
+BASE_DIR = "dominance_data"
+SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "sims",
                                  "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L:.1f}.tsv")
-EXAC_SUMSTATS_PATH = os.path.join(BASE_DIR, "genedose", "ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
+EXAC_SUMSTATS_PATH = os.path.join(BASE_DIR, "ExAC_63K_symbol_plus_ensembl_func_summary_stats.tsv")
 
-LIKELIHOOD_FILES = {('kde_nearest', 'tennessen'): "ExAC_kde_inference_nearest.20200130.tsv",
-                    ('kde_nearest', 'supertennessen'): "ExAC_63K_kde_nearest_nolscale_supertennessen_inference.tsv",
-                    ('kde_nearest', 'subtennessen'): "kde_nearest_nolscale_exac_inference_subtennessen.tsv",
-                    ('kde_3d', 'tennessen'): "ExAC_kde_inference_3d.20200124.tsv",
-                    ('kde_3d', 'supertennessen'): "ExAC_63K_kde_3d_nolscale_supertennessen_inference.tsv",
-                    ('kde_3d', 'subtennessen'): "kde_3d_nolscale_exac_inference_subtennessen.tsv",
-                    ('kde', 'tennessen'): "ExAC_kde_inference_3d.20200124.tsv",
-                    ('kde', 'supertennessen'): "ExAC_63K_kde_3d_nolscale_supertennessen_inference.tsv",
-                    ('kde', 'subtennessen'): "kde_3d_nolscale_exac_inference_subtennessen.tsv",
-                    ('prf', 'tennessen'): "ExAC_prf_inference.20191212.tsv",
-                    ('prf', 'supertennessen'): "ExAC_63K_prf_supertennessen_inference.tsv",
-                    ('prf', 'subtennessen'): "ExAC_63K_prf_subtennessen_inference.tsv"}
+LIKELIHOOD_FILE = "ExAC_63K_prf_supertennessen_inference.tsv"
 
-LIKELIHOODS = ['prf', 'kde', 'kde_nearest']
-DEMOGRAPHIES = ['tennessen', 'supertennessen']
+LIKELIHOODS = ['prf']
+DEMOGRAPHIES = ['supertennessen']
 S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
 H_VALUES = ['0.0', '0.1', '0.3', '0.5']
 FUNCS = ['LOF_probably', 'synon']
@@ -45,7 +34,7 @@ class DataFileWarning(UserWarning):
     pass
 
 
-geneset_base_dir = os.path.join(BASE_DIR, "slim", "mock_genome")
+geneset_base_dir = os.path.join(BASE_DIR, "genesets")
 
 try:
     for geneset_name in filter(lambda name: name != "all", GENESETS):
@@ -74,9 +63,32 @@ def extract_histogram_sims(df):
     return counts_grid
 
 
+def tuplify_args(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        new_args = []
+        for arg in args:
+            if not np.isscalar(arg):
+                new_arg = tuple(arg)
+            else:
+                new_arg = arg
+            new_args.append(new_arg)
+        new_kwargs = {}
+        for key, value in kwargs.items():
+            if not np.isscalar(arg):
+                new_value = tuple(value)
+            else:
+                new_value = value
+            new_kwargs[key] = new_value
+        return f(*new_args, **new_kwargs)
+    return wrapper
+
+
+@tuplify_args
 @lru_cache(maxsize=None)
 def load_sim_data(likelihood, ref, sim, s, h, L):
-    if isinstance(L, pd.Series):
+    if isinstance(L, tuple):
+        L = pd.Series(L)
         sims_to_concat = []
         for l, count in L.round(1).value_counts().iteritems():
             sims_to_concat.append(pd.read_table(SIM_DATA_TEMPLATE.format(likelihood=likelihood,
@@ -128,7 +140,7 @@ enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra><
         with np.errstate(divide="ignore"):
             log_oddsratio = np.log(heatmap_data_row["odds_ratios"])
             log_oddsratio[log_oddsratio == -np.inf] = -10.0
-            
+
         if z_variable == "p_value":
             z = np.copysign(np.log10(heatmap_data_row["p_values"]), log_oddsratio)
             zmin = -10.0
@@ -157,7 +169,7 @@ enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra><
 
 @lru_cache(maxsize=None)
 def load_unfiltered_df(likelihood, demography):
-    filename = os.path.join(BASE_DIR, "genedose", LIKELIHOOD_FILES[likelihood, demography])
+    filename = os.path.join(BASE_DIR, LIKELIHOOD_FILE)
     return pd.read_table(filename)
 
 
