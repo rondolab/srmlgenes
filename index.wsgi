@@ -14,43 +14,56 @@ app = create_app(__name__, __file__)
 
 app.layout = dcc.Tabs(children=[
         dcc.Tab(label="Simulated Genes", children=[html.Div(children=[
-                dcc.Graph(id='heatmap-sim', style={'height': '600px'}),
-                html.Label("h"), dcc.Slider(id="h-slider", min=0, max=3,
-                                            marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
-                                            disabled=True, value=3),
-                html.Br(),
-                html.Label("s"), dcc.Slider(id="s-slider", min=0, max=4,
-                    marks={0: 'Neutral', 1: '-10⁻⁴', 2: '-10⁻³', 3: '-10⁻²', 4: '-10⁻¹'},
-                                            value=0),
-                html.Br(),
-                dcc.RadioItems(id="L-select-mode",
-                    options=[{'label': "Empirical length profile", 'value': 'empirical'},
-                             {'label': "Single length", 'value': 'single'}], value='single'),
-                html.Div(id="L-select-single", children=[html.Label("L"), dcc.Slider(id="L-slider-single", min=2, max=5, step=0.1,
-                    marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵'},
-                                            value=3,
-                                            tooltip={'always_visible' : False})]),
-                html.Div(id="L-select-empirical", children=gene_select_controls("-sim"))
-                ], style={'width': '730px',
-                          'margin-left': '20px',
-                          'margin-right': '20px',
-                          'margin-top': '10px',
-                          'margin-bottom': '10px'})]),
-        dcc.Tab(label="Empirical Genes", children=[html.Div(children=[
-                dcc.Graph(id='heatmap-exac', style={'height': '600px'}),
-                html.Label("Color Scheme"),
+                    html.Div(children=[
+                        html.Label("h"),
+                        dcc.Slider(id="h-slider", min=0, max=3,
+                                    marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
+                                    disabled=True, value=3),
+                    html.Br(),
+                    html.Label("s"),
+                        dcc.Slider(id="s-slider", min=0, max=4,
+                                    marks={0: 'Neutral', 1: '-10⁻⁴', 2: '-10⁻³', 3: '-10⁻²', 4: '-10⁻¹'},
+                                    value=0),
+                    html.Br(),
+                        dcc.RadioItems(id="L-select-mode",
+                            options=[{'label': "Empirical length profile", 'value': 'empirical'},
+                                     {'label': "Single length", 'value': 'single'}], value='single'),
+                    html.Div(id="L-select-single", children=[
+                        html.Label("L"),
+                        dcc.Slider(id="L-slider-single", min=2, max=5, step=0.1,
+                                  marks={2: '10²', 3 : '10³', 4: '10⁴', 5: '10⁵'},
+                                    value=3,
+                                    tooltip={'always_visible' : False})]),
+                    html.Div(id="L-select-empirical", children=gene_select_controls("-sim"))
+                ], style={'width': '30%',
+                          'margin-left': '5%',
+                          'margin-right': '5%',
+                          'margin-top': '10%',
+                          'display': 'inline-block'}),
+                    html.Div(children=[
+                        dcc.Graph(id='heatmap-sim')
+                    ], style={'width': '60%',
+                              'display': 'inline-block',
+                              'float': 'right'})],
+                style={ 'width': '800px' })]),
+        dcc.Tab(label="ExAC Genes", children=[html.Div(children=[
+                html.Div([html.Label("Color Scheme"),
                 dcc.RadioItems(id="color-buttons",
                                options=[{'label': 'Histogram', 'value': 'histogram'},
                                         {'label': 'Enrichment (log odds ratio)', 'value': 'odds_ratio'},
                                         {'label': 'Enrichment (p-value)', 'value': 'p_value'}],
                                value='histogram')] +
-                gene_select_controls("-exac"), style={'width': '730px',
-                          'margin-left': '20px',
-                          'margin-right': '20px',
-                          'margin-top': '10px',
-                          'margin-bottom': '10px'})])
-
-                ])
+                gene_select_controls("-exac"),
+                style={'width': '30%',
+                          'margin-left': '5%',
+                          'margin-right': '5%',
+                          'margin-top': '10%',
+                          'display': 'inline-block'}),
+                html.Div([dcc.Graph(id='heatmap-exac', style={'height': '600px'})],
+                         style={'width': '60%',
+                              'display': 'inline-block',
+                              'float': 'right'})],
+                 style={'width': '800px'})])])
 application = app.server
 
 
