@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 
 sys.path.append(os.path.dirname(__file__))
 from heatmaps_common import create_app, gene_select_controls, make_heatmap_single_sim, \
@@ -12,8 +12,9 @@ from heatmaps_common import create_app, gene_select_controls, make_heatmap_singl
 
 app = create_app(__name__, __file__)
 
-app.layout = dcc.Tabs(children=[
-        dcc.Tab(label="Simulated Genes", children=[html.Div(children=[
+app.layout = html.Div([
+        dcc.Tabs(id="tabs", value="sims", children=[
+        dcc.Tab(label="Simulated Genes", value='sims', children=[html.Div(children=[
                     html.Div(children=[
                         html.Label("h"),
                         dcc.Slider(id="h-slider", min=0, max=3,
@@ -46,7 +47,7 @@ app.layout = dcc.Tabs(children=[
                               'display': 'inline-block',
                               'float': 'right'})],
                 style={ 'width': '800px' })]),
-        dcc.Tab(label="ExAC Genes", children=[html.Div(children=[
+        dcc.Tab(label="ExAC Genes", value='exac', children=[html.Div(children=[
                 html.Div([html.Label("Color Scheme"),
                 dcc.RadioItems(id="color-buttons",
                                options=[{'label': 'Histogram', 'value': 'histogram'},
@@ -63,7 +64,7 @@ app.layout = dcc.Tabs(children=[
                          style={'width': '60%',
                               'display': 'inline-block',
                               'float': 'right'})],
-                 style={'width': '800px'})])])
+                 style={'width': '800px'})])])])
 application = app.server
 
 
@@ -78,14 +79,10 @@ def switch_L_selection_visibility(mode):
         raise ValueError(f"Unrecognized L selection mode {mode}")
 
 
-@app.callback([Output('h-slider', 'value'), Output('h-slider', 'disabled')],
-              [Input('s-slider', 'value')],
-              [State('h-slider', 'value')])
-def adjust_h_slider(s_slider_value, h_slider_value):
-    if s_slider_value == 0:
-        return 3, True
-    else:
-        return h_slider_value, False
+@app.callback(Output('h-slider', 'disabled'),
+              [Input('s-slider', 'value')])
+def adjust_h_slider(s_slider_value):
+    return s_slider_value == 0
 
 h_labels = ["0.0", "0.1", "0.3", "0.5"]
 s_labels = ["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"]
@@ -100,6 +97,8 @@ s_labels = ["NEUTRAL", "-4.0", "-3.0", "-2.0", "-1.0"]
                Input('L-slider-single', 'value'),
                Input('L-select-mode', 'value')])
 def update_heatmap_sim(h_idx, s_idx, func, geneset, L_boundaries, single_L, L_mode):
+    if s_idx == 0:
+        h_idx = 3
     if L_mode == "single":
         return make_heatmap_single_sim("prf", "supertennessen", "supertennessen", s_labels[s_idx], h_labels[h_idx], single_L)
     elif L_mode == "empirical":
