@@ -177,7 +177,10 @@ def filter_df(df, func, genelist, min_L, max_L):
     selector = df.func == func
     selector &= df.U.between(10**(min_L-8), 10**(max_L-8))
     if genelist != "all":
-        selector &= df.gene.isin(GENESETS_DICT[genelist])
+        if isinstance(genelist, (set, frozenset)):
+            selector &= df.gene.isin(genelist)
+        else:
+            selector &= df.gene.isin(GENESETS_DICT[genelist])
     return df.loc[selector]
 
 
@@ -265,13 +268,20 @@ def gene_select_controls(id_suffix=""):
         dcc.Dropdown(id="geneset-dropdown" + id_suffix,
                      options=[{'label': 'All genes', 'value': 'all'},
                               {'label': 'HI > 80%', 'value': 'haplo_Hurles_80'},
-                              {'label': 'CGD AD (old)', 'value': 'CGD_AD'},
                               {'label': 'CGD AD', 'value': 'CGD_AD_2020'},
                               {'label': 'Inbred', 'value': 'inbred_ALL'},
                               {'label': 'HI < 20%', 'value': 'haplo_Hurles_low20'},
-                              {'label': 'CGD AR (old)', 'value': 'CGD_AR'},
-                              {'label': 'CGD AR', 'value': 'CGD_AR_2020'}],
+                              {'label': 'CGD AR', 'value': 'CGD_AR_2020'},
+                              {'label': 'Custom list', 'value': 'custom'}],
                      value='all', style={'width': '7em', 'display': 'inline-block'}),
+        html.Div(id="custom-select" + id_suffix, hidden=True, children=[
+        html.Label("Enter gene symbols, one per line or separated by commas or spaces, or upload a file with gene symbols."),
+        dcc.Textarea(id='genes-textbox' + id_suffix),
+        html.Button("Update", id="update-button" + id_suffix, n_clicks=0),
+        html.Label([], id="textbox-genes-label" + id_suffix),
+        dcc.Upload(id='genes-upload' + id_suffix, children=[html.Button("Select file")]),
+        html.Label([], id="upload-genes-label" + id_suffix),
+        dcc.Store(id="custom-genes" + id_suffix)]),
         dcc.Dropdown(id="func-dropdown" + id_suffix,
                      options=[{'label': "LOF + PolyPhen probably", 'value': 'LOF_probably'},
                               {'label': "synonymous", 'value': 'synon'}],
