@@ -4,7 +4,7 @@ import sys
 import dash_core_components as dcc
 
 sys.path.append(os.path.dirname(__file__))
-from app import create_app
+from myapp import create_app
 from layouts import SimsTab, ExacTab, TwoTabLayout
 
 app = create_app(__name__, __file__, development_mode=("dev" in __file__))
