@@ -1,1 +1,2 @@
 SetHandler wsgi-script
+DirectoryIndex index.wsgi
