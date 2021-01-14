@@ -41,20 +41,18 @@ class GeneSelectControls(DashLayout):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.geneset_dropdown = self.make_component(dcc.Dropdown, "geneset-dropdown",
-                                                    options=[{'label': 'All genes', 'value': 'all'},
-                                                             {'label': 'Upload list', 'value': 'custom'},
+                                                    options=[{'label': 'Upload custom list', 'value': 'custom'},
                                                              {'label': 'ConsangBP', 'value': 'inbred_ALL'},
                                                              {'label': 'HI80', 'value': 'haplo_Hurles_80'},
                                                              {'label': 'HI20', 'value': 'haplo_Hurles_low20'},
                                                              {'label': 'CGD AR', 'value': 'CGD_AR_2020'},
                                                              {'label': 'CGD AD', 'value': 'CGD_AD_2020'},
                                                              {'label': 'Lethal AR', 'value': 'Molly_recessive_lethal'}],
-                                                    value='all', style={'width': '7em', 'display': 'inline-block'})
+                                                    placeholder="Select a gene list")
         self.quality_dropdown = self.make_component(dcc.Dropdown, "quality-dropdown",
-                                                    options=[{'label': 'No ClinVar filter', 'value': 'all'},
-                                                             {'label': 'ClinVar High Qquality', 'value': 'high'},
+                                                    options=[{'label': 'ClinVar High Quality', 'value': 'high'},
                                                              {'label': 'ClinVar Low Quality', 'value': 'low'}],
-                                                    value='all', style={'width': '10em', 'display': 'inline-block'})
+                                                    placeholder="Select a quality filter")
         self.genes_textbox = self.make_component(dcc.Textarea, "genes-textbox")
         self.genes_update_button = self.make_component(html.Button, "update-button", "Update", n_clicks=0)
         self.genes_textbox_label = self.make_component(html.Label, "textbox-genes-label")
@@ -72,7 +70,7 @@ class GeneSelectControls(DashLayout):
         self.func_dropdown = self.make_component(dcc.Dropdown, "func-dropdown",
                      options=[{'label': "LOF + damaging missense", 'value': 'LOF_probably'},
                               {'label': "synonymous", 'value': 'synon'}],
-                     value="LOF_probably", style={'width': '15em', 'display': 'inline-block'})
+                     value="LOF_probably", clearable=False)
         self.length_slider = self.make_component(dcc.RangeSlider, "L-slider", min=0, max=6, step=0.1,
                     marks={0: '10⁰', 1: '10¹', 2: '10²', 3: '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
                     value=[2.5, 5],
@@ -242,6 +240,12 @@ class ExacTab(GeneSelectControls):
                            Input(self.length_slider.id, 'value'),
                            Input(self.color_scheme_buttons.id, 'value'),
                            Input(self.genes_store.id, 'data')])
+        self.tag_callback(self.enable_disable_color_select,
+                          [Output(self.color_scheme_buttons.id, "options"),
+                           Output(self.color_scheme_buttons.id, "value")],
+                          [Input(self.geneset_dropdown.id, "value"),
+                           Input(self.quality_dropdown.id, "value")],
+                          [State(self.color_scheme_buttons.id, "options")])
 
     def render_layout(self):
         return html.Div([html.Div([html.Label("Color Scheme"),
@@ -268,6 +272,17 @@ class ExacTab(GeneSelectControls):
             else:
                 raise PreventUpdate
         return make_heatmap_empirical("prf", "supertennessen", func, geneset, quality, Ls[0], Ls[1], z_variable)
+
+    def enable_disable_color_select(self, geneset, quality, options):
+        if geneset is None and quality is None:
+            for option in options:
+                if option["value"] != "histogram":
+                    option["disabled"] = True
+            return options, "histogram"
+        else:
+            for option in options:
+                option["disabled"] = False
+            return options, no_update
 
 class TwoTabLayout(DashLayout):
     def __init__(self):

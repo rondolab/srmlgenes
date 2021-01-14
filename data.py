@@ -13,7 +13,7 @@ SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "sims",
 
 LIKELIHOOD_FILE = "ExAC_63K_prf_supertennessen_inference.tsv"
 HIQUAL_GENESET_NAME = "clinvar_atleast2_2plus"
-GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020',
+GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020',
             HIQUAL_GENESET_NAME]
 
 GENESETS_DICT = {}
@@ -26,7 +26,7 @@ class DataFileWarning(UserWarning):
 geneset_base_dir = os.path.join(BASE_DIR, "genesets")
 
 try:
-    for geneset_name in filter(lambda name: name != "all", GENESETS):
+    for geneset_name in GENESETS:
         filename = os.path.join(geneset_base_dir, geneset_name + '.tsv')
         geneset = set()
         with open(filename) as list_file:
@@ -165,7 +165,7 @@ def load_unfiltered_df(likelihood, demography):
 def filter_df(df, func, genelist, quality, min_L, max_L):
     selector = df.func == func
     selector &= df.U.between(10**(min_L-8), 10**(max_L-8))
-    if genelist != "all":
+    if genelist is not None:
         if isinstance(genelist, (set, frozenset)):
             selector &= df.gene.isin(genelist)
         else:
@@ -204,11 +204,11 @@ def load_exac_data(likelihood, demography, func, geneset, quality, min_L, max_L)
     geneset_df = load_filtered_df(demography, func, geneset, quality, likelihood, min_L, max_L)
     geneset_histogram = np.array(extract_histogram_empirical(geneset_df), dtype=float)
     geneset_count = len(geneset_df)
-    if geneset == "all":
+    if geneset is None:
         ones = np.ones_like(geneset_histogram)
         ones[np.isnan(geneset_histogram)] = np.nan
         return geneset_histogram, ones, ones
-    all_df = load_filtered_df(demography, func, "all", "all", likelihood, min_L, max_L)
+    all_df = load_filtered_df(demography, func, None, None, likelihood, min_L, max_L)
     all_count = len(all_df)
     all_histogram = np.array(extract_histogram_empirical(all_df), dtype=float)
     complement_histogram = all_histogram - geneset_histogram
