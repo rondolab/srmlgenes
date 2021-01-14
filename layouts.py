@@ -42,12 +42,13 @@ class GeneSelectControls(DashLayout):
         super().__init__(*args, **kwargs)
         self.geneset_dropdown = self.make_component(dcc.Dropdown, "geneset-dropdown",
                                                     options=[{'label': 'All genes', 'value': 'all'},
-                                                             {'label': 'HI > 80%', 'value': 'haplo_Hurles_80'},
-                                                             {'label': 'CGD AD', 'value': 'CGD_AD_2020'},
-                                                             {'label': 'Inbred', 'value': 'inbred_ALL'},
-                                                             {'label': 'HI < 20%', 'value': 'haplo_Hurles_low20'},
+                                                             {'label': 'Upload list', 'value': 'custom'},
+                                                             {'label': 'ConsangBP', 'value': 'inbred_ALL'}
+                                                             {'label': 'HI80', 'value': 'haplo_Hurles_80'},
+                                                             {'label': 'HI20', 'value': 'haplo_Hurles_low20'},
                                                              {'label': 'CGD AR', 'value': 'CGD_AR_2020'},
-                                                             {'label': 'Custom list', 'value': 'custom'}],
+                                                             {'label': 'CGD AD', 'value': 'CGD_AD_2020'},
+                                                             {'label': 'Lethal AR', 'value': 'Molly_recessive_lethal'}],
                                                     value='all', style={'width': '7em', 'display': 'inline-block'})
         self.genes_textbox = self.make_component(dcc.Textarea, "genes-textbox")
         self.genes_update_button = self.make_component(html.Button, "update-button", "Update", n_clicks=0)
@@ -69,7 +70,7 @@ class GeneSelectControls(DashLayout):
                      value="LOF_probably", style={'width': '15em', 'display': 'inline-block'})
         self.length_slider = self.make_component(dcc.RangeSlider, "L-slider", min=0, max=6, step=0.1,
                     marks={0: '10⁰', 1: '10¹', 2: '10²', 3: '10³', 4: '10⁴', 5: '10⁵', 6: '10⁶'},
-                    value=[2, 5],
+                    value=[2.5, 5],
                     tooltip={'always_visible': False})
 
         self.tag_callback(self.switch_custom_selection_visibility,
