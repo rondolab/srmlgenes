@@ -11,6 +11,9 @@ from dash.exceptions import PreventUpdate
 from data import make_heatmap_single_sim, make_heatmap_geneset_sim, \
     make_heatmap_empirical
 
+S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
+H_VALUES = ['0.0', '0.1', '0.3', '0.5']
+
 
 class DashLayout:
     def __init__(self, id_suffix=""):
@@ -253,6 +256,18 @@ class ExacTab(GeneSelectControls):
                 raise PreventUpdate
         return make_heatmap_empirical("prf", "supertennessen", func, geneset, Ls[0], Ls[1], z_variable)
 
+class TwoTabLayout(DashLayout):
+    def __init__(self):
+        self.sims_tab = SimsTab()
+        self.exac_tab = ExacTab()
 
-S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
-H_VALUES = ['0.0', '0.1', '0.3', '0.5']
+    def render_layout(self):
+        return dcc.Tabs(id="tabs", value="sims", children=[
+                    dcc.Tab(label="Simulated Genes", value='sims',
+                            children=self.sims_tab.render_layout()),
+                    dcc.Tab(label="ExAC Genes", value='exac',
+                            children=self.exac_tab.render_layout())])
+
+    def register_callbacks(self, app):
+        self.sims_tab.register_callbacks(app)
+        self.exac_tab.register_callbacks(app)
