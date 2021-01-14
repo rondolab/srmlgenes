@@ -4,9 +4,10 @@ import sys
 import dash_core_components as dcc
 
 sys.path.append(os.path.dirname(__file__))
-from heatmaps_common import create_app, SimsTab, ExacTab
+from app import create_app
+from layouts import SimsTab, ExacTab
 
-app = create_app(__name__, __file__)
+app = create_app(__name__, __file__, development_mode=("dev" in __file__))
 
 sim_tab = SimsTab()
 exac_tab = ExacTab()
