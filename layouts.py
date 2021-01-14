@@ -178,10 +178,13 @@ class SimsTab(GeneSelectControls):
                                   'margin-right': '5%',
                                   'margin-top': '10%',
                                   'display': 'inline-block'}),
-            html.Div(children=[self.heatmap],
+            html.Div(className="loader-wrapper",
+                     children=[dcc.Loading(self.heatmap,
+                                              type="circle",
+                                              style={'margin-left': "60%"})],
                      style={'width': '60%',
-                      'display': 'inline-block',
-                      'float': 'right'})],
+                            'display': 'inline-block',
+                           'float': 'right'})],
             style={'width': '800px'})
 
     def update_heatmap(self, h_idx, s_idx, func, geneset, L_boundaries, single_L, L_mode, custom_genelist):
@@ -240,7 +243,10 @@ class ExacTab(GeneSelectControls):
                                         'margin-right': '5%',
                                         'margin-top': '10%',
                                         'display': 'inline-block'}),
-                        html.Div([self.heatmap],
+                        html.Div(className="loader-wrapper",
+                                 children=[dcc.Loading(self.heatmap,
+                                                          type="circle",
+                                                          style={'margin-left': "60%"})],
                                 style={'width': '60%',
                                         'display': 'inline-block',
                                         'float': 'right'})],
@@ -273,7 +279,8 @@ class TwoTabLayout(DashLayout):
                            Output(self.sims_tab.genes_textbox.id, "value"),
                            Output(self.sims_tab.genes_update_button.id, "n_clicks"),
                            Output(self.sims_tab.genes_upload.id, "contents"),
-                           Output(self.sims_tab.genes_upload.id, "filename")],
+                           Output(self.sims_tab.genes_upload.id, "filename"),
+                           Output(self.sims_tab.heatmap.id, "loading_state")],
                           [Input(self.tabs.id, "value")],
                           [State(self.exac_tab.func_dropdown.id, "value"),
                            State(self.exac_tab.geneset_dropdown.id, "value"),
@@ -292,7 +299,8 @@ class TwoTabLayout(DashLayout):
                            Output(self.exac_tab.genes_textbox.id, "value"),
                            Output(self.exac_tab.genes_update_button.id, "n_clicks"),
                            Output(self.exac_tab.genes_upload.id, "contents"),
-                           Output(self.exac_tab.genes_upload.id, "filename")],
+                           Output(self.exac_tab.genes_upload.id, "filename"),
+                           Output(self.exac_tab.heatmap.id, "loading_state")],
                           [Input(self.tabs.id, "value")],
                           [State(self.sims_tab.func_dropdown.id, "value"),
                            State(self.sims_tab.geneset_dropdown.id, "value"),
@@ -326,5 +334,6 @@ class TwoTabLayout(DashLayout):
                     box_text if box_label else no_update,
                     button_clicks + 1 if box_label else no_update,
                     upload_data if upload_label else no_update,
-                    upload_filename if upload_label else no_update)
+                    upload_filename if upload_label else no_update,
+                    {"is_loading": True} )
         return transfer_gene_select_params
