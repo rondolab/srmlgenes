@@ -43,12 +43,17 @@ class GeneSelectControls(DashLayout):
         self.geneset_dropdown = self.make_component(dcc.Dropdown, "geneset-dropdown",
                                                     options=[{'label': 'All genes', 'value': 'all'},
                                                              {'label': 'Upload list', 'value': 'custom'},
-                                                             {'label': 'ConsangBP', 'value': 'inbred_ALL'}
+                                                             {'label': 'ConsangBP', 'value': 'inbred_ALL'},
                                                              {'label': 'HI80', 'value': 'haplo_Hurles_80'},
                                                              {'label': 'HI20', 'value': 'haplo_Hurles_low20'},
                                                              {'label': 'CGD AR', 'value': 'CGD_AR_2020'},
                                                              {'label': 'CGD AD', 'value': 'CGD_AD_2020'},
                                                              {'label': 'Lethal AR', 'value': 'Molly_recessive_lethal'}],
+                                                    value='all', style={'width': '7em', 'display': 'inline-block'})
+        self.quality_dropdown = self.make_component(dcc.Dropdown, "quality-dropdown",
+                                                    options=[{'label': 'All qualities', 'value': 'all'},
+                                                             {'label': 'High quality', 'value': 'high'},
+                                                             {'label': 'Low quality', 'value': 'low'}],
                                                     value='all', style={'width': '7em', 'display': 'inline-block'})
         self.genes_textbox = self.make_component(dcc.Textarea, "genes-textbox")
         self.genes_update_button = self.make_component(html.Button, "update-button", "Update", n_clicks=0)
@@ -65,7 +70,7 @@ class GeneSelectControls(DashLayout):
                 self.genes_store
             ])
         self.func_dropdown = self.make_component(dcc.Dropdown, "func-dropdown",
-                     options=[{'label': "LOF + PolyPhen probably", 'value': 'LOF_probably'},
+                     options=[{'label': "LOF + damaging missense", 'value': 'LOF_probably'},
                               {'label': "synonymous", 'value': 'synon'}],
                      value="LOF_probably", style={'width': '15em', 'display': 'inline-block'})
         self.length_slider = self.make_component(dcc.RangeSlider, "L-slider", min=0, max=6, step=0.1,
@@ -88,6 +93,7 @@ class GeneSelectControls(DashLayout):
     def render_gene_select_sublayout(self):
         return [
             self.geneset_dropdown,
+            self.quality_dropdown,
             self.custom_select_div,
             self.func_dropdown,
             html.Label("L"), self.length_slider
