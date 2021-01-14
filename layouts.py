@@ -78,8 +78,7 @@ class GeneSelectControls(DashLayout):
         self.tag_callback(self.update_custom_genes,
                           [Output(self.genes_store.id, "data"),
                            Output(self.genes_textbox_label.id, "children"),
-                           Output(self.genes_upload_label.id, "children"),
-                           Output(self.genes_textbox.id, "value")],
+                           Output(self.genes_upload_label.id, "children")],
                           [Input(self.genes_update_button.id, "n_clicks"),
                            Input(self.genes_upload.id, "contents"),
                            Input(self.genes_upload.id, "filename")],
@@ -108,15 +107,14 @@ class GeneSelectControls(DashLayout):
                 content_type, encoded_content = upload_data.split(",")
                 text = base64.b64decode(encoded_content).decode('utf8')
             except ValueError:
-                return no_update, no_update, f"Error processing file {upload_filename}", no_update
+                return no_update, no_update, f"Error processing file {upload_filename}"
         else:
             raise PreventUpdate
         genes = re.split(r"[\s,]+", text.upper())
         genes_set = set(genes)
         return (genes,
-               f"parsed {len(genes_set)} unique genes" if source == "textbox" else [],
-               f"loaded {len(genes_set)} unique genes from {upload_filename}" if source == "upload" else [],
-               "\n".join(genes_set) if source == "textbox" else no_update)
+               f"loaded {len(genes_set)} unique genes" if source == "textbox" else [],
+               f"loaded {len(genes_set)} unique genes from {upload_filename}" if source == "upload" else [])
 
     def render_layout(self):
         return self.render_gene_select_sublayout()
@@ -258,16 +256,75 @@ class ExacTab(GeneSelectControls):
 
 class TwoTabLayout(DashLayout):
     def __init__(self):
+        super().__init__()
         self.sims_tab = SimsTab()
         self.exac_tab = ExacTab()
-
-    def render_layout(self):
-        return dcc.Tabs(id="tabs", value="sims", children=[
+        self.tabs = self.make_component(dcc.Tabs, "tabs", value="sims",
+                children=[
                     dcc.Tab(label="Simulated Genes", value='sims',
                             children=self.sims_tab.render_layout()),
                     dcc.Tab(label="ExAC Genes", value='exac',
                             children=self.exac_tab.render_layout())])
 
+        self.tag_callback(self.transfer_gene_select_params_callback("sims"),
+                          [Output(self.sims_tab.func_dropdown.id, "value"),
+                           Output(self.sims_tab.geneset_dropdown.id, "value"),
+                           Output(self.sims_tab.length_slider.id, "value"),
+                           Output(self.sims_tab.genes_textbox.id, "value"),
+                           Output(self.sims_tab.genes_update_button.id, "n_clicks"),
+                           Output(self.sims_tab.genes_upload.id, "contents"),
+                           Output(self.sims_tab.genes_upload.id, "filename")],
+                          [Input(self.tabs.id, "value")],
+                          [State(self.exac_tab.func_dropdown.id, "value"),
+                           State(self.exac_tab.geneset_dropdown.id, "value"),
+                           State(self.exac_tab.length_slider.id, "value"),
+                           State(self.exac_tab.genes_textbox.id, "value"),
+                           State(self.sims_tab.genes_update_button.id, "n_clicks"),
+                           State(self.exac_tab.genes_upload.id, "contents"),
+                           State(self.exac_tab.genes_upload.id, "filename"),
+                           State(self.exac_tab.genes_textbox_label.id, "children"),
+                           State(self.exac_tab.genes_upload_label.id, "children")])
+
+        self.tag_callback(self.transfer_gene_select_params_callback("exac"),
+                          [Output(self.exac_tab.func_dropdown.id, "value"),
+                           Output(self.exac_tab.geneset_dropdown.id, "value"),
+                           Output(self.exac_tab.length_slider.id, "value"),
+                           Output(self.exac_tab.genes_textbox.id, "value"),
+                           Output(self.exac_tab.genes_update_button.id, "n_clicks"),
+                           Output(self.exac_tab.genes_upload.id, "contents"),
+                           Output(self.exac_tab.genes_upload.id, "filename")],
+                          [Input(self.tabs.id, "value")],
+                          [State(self.sims_tab.func_dropdown.id, "value"),
+                           State(self.sims_tab.geneset_dropdown.id, "value"),
+                           State(self.sims_tab.length_slider.id, "value"),
+                           State(self.sims_tab.genes_textbox.id, "value"),
+                           State(self.exac_tab.genes_update_button.id, "n_clicks"),
+                           State(self.sims_tab.genes_upload.id, "contents"),
+                           State(self.sims_tab.genes_upload.id, "filename"),
+                           State(self.sims_tab.genes_textbox_label.id, "children"),
+                           State(self.sims_tab.genes_upload_label.id, "children")])
+
+
+
+    def render_layout(self):
+        return self.tabs
+
     def register_callbacks(self, app):
+        super().register_callbacks(app)
         self.sims_tab.register_callbacks(app)
         self.exac_tab.register_callbacks(app)
+
+    @staticmethod
+    def transfer_gene_select_params_callback(target):
+        def transfer_gene_select_params(tab, func, geneset, L_boundaries,
+                                        box_text, button_clicks,
+                                        upload_data, upload_filename,
+                                        box_label, upload_label):
+            if tab != target:
+                raise PreventUpdate
+            return (func, geneset, L_boundaries,
+                    box_text if box_label else no_update,
+                    button_clicks + 1 if box_label else no_update,
+                    upload_data if upload_label else no_update,
+                    upload_filename if upload_label else no_update)
+        return transfer_gene_select_params
