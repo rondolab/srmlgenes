@@ -51,10 +51,10 @@ class GeneSelectControls(DashLayout):
                                                              {'label': 'Lethal AR', 'value': 'Molly_recessive_lethal'}],
                                                     value='all', style={'width': '7em', 'display': 'inline-block'})
         self.quality_dropdown = self.make_component(dcc.Dropdown, "quality-dropdown",
-                                                    options=[{'label': 'All qualities', 'value': 'all'},
-                                                             {'label': 'High quality', 'value': 'high'},
-                                                             {'label': 'Low quality', 'value': 'low'}],
-                                                    value='all', style={'width': '7em', 'display': 'inline-block'})
+                                                    options=[{'label': 'No ClinVar filter', 'value': 'all'},
+                                                             {'label': 'ClinVar High Qquality', 'value': 'high'},
+                                                             {'label': 'ClinVar Low Quality', 'value': 'low'}],
+                                                    value='all', style={'width': '10em', 'display': 'inline-block'})
         self.genes_textbox = self.make_component(dcc.Textarea, "genes-textbox")
         self.genes_update_button = self.make_component(html.Button, "update-button", "Update", n_clicks=0)
         self.genes_textbox_label = self.make_component(html.Label, "textbox-genes-label")
@@ -157,6 +157,7 @@ class SimsTab(GeneSelectControls):
                            Input(self.s_slider.id, 'value'),
                            Input(self.func_dropdown.id, 'value'),
                            Input(self.geneset_dropdown.id, 'value'),
+                           Input(self.quality_dropdown.id, 'value'),
                            Input(self.length_slider.id, 'value'),
                            Input(self.length_slider_single.id, 'value'),
                            Input(self.length_select_mode.id, 'value'),
@@ -194,7 +195,7 @@ class SimsTab(GeneSelectControls):
                            'float': 'right'})],
             style={'width': '800px'})
 
-    def update_heatmap(self, h_idx, s_idx, func, geneset, L_boundaries, single_L, L_mode, custom_genelist):
+    def update_heatmap(self, h_idx, s_idx, func, geneset, quality, L_boundaries, single_L, L_mode, custom_genelist):
         if s_idx == 0:
             h_idx = 3
         if L_mode == "single":
@@ -207,8 +208,8 @@ class SimsTab(GeneSelectControls):
                     geneset = frozenset(custom_genelist)
                 else:
                     raise PreventUpdate
-            return make_heatmap_geneset_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx],
-                                            H_VALUES[h_idx], func, geneset, L_boundaries[0], L_boundaries[1])
+            return make_heatmap_geneset_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx], H_VALUES[h_idx],
+                                            func, geneset, quality, L_boundaries[0], L_boundaries[1])
         else:
             raise ValueError(f"Unknown L selection mode {L_mode}")
 
@@ -237,6 +238,7 @@ class ExacTab(GeneSelectControls):
                           Output(self.heatmap.id, 'figure'),
                           [Input(self.func_dropdown.id, 'value'),
                            Input(self.geneset_dropdown.id, 'value'),
+                           Input(self.quality_dropdown.id, 'value'),
                            Input(self.length_slider.id, 'value'),
                            Input(self.color_scheme_buttons.id, 'value'),
                            Input(self.genes_store.id, 'data')])
@@ -259,13 +261,13 @@ class ExacTab(GeneSelectControls):
                                         'float': 'right'})],
                 style={'width': '800px'})
 
-    def update_heatmap(self, func, geneset, Ls, z_variable, custom_genelist):
+    def update_heatmap(self, func, geneset, quality, Ls, z_variable, custom_genelist):
         if geneset == "custom":
             if custom_genelist:
                 geneset = frozenset(custom_genelist)
             else:
                 raise PreventUpdate
-        return make_heatmap_empirical("prf", "supertennessen", func, geneset, Ls[0], Ls[1], z_variable)
+        return make_heatmap_empirical("prf", "supertennessen", func, geneset, quality, Ls[0], Ls[1], z_variable)
 
 class TwoTabLayout(DashLayout):
     def __init__(self):
@@ -282,6 +284,7 @@ class TwoTabLayout(DashLayout):
         self.tag_callback(self.transfer_gene_select_params_callback("sims"),
                           [Output(self.sims_tab.func_dropdown.id, "value"),
                            Output(self.sims_tab.geneset_dropdown.id, "value"),
+                           Output(self.sims_tab.quality_dropdown.id, "value"),
                            Output(self.sims_tab.length_slider.id, "value"),
                            Output(self.sims_tab.genes_textbox.id, "value"),
                            Output(self.sims_tab.genes_update_button.id, "n_clicks"),
@@ -291,6 +294,7 @@ class TwoTabLayout(DashLayout):
                           [Input(self.tabs.id, "value")],
                           [State(self.exac_tab.func_dropdown.id, "value"),
                            State(self.exac_tab.geneset_dropdown.id, "value"),
+                           State(self.exac_tab.quality_dropdown.id, "value"),
                            State(self.exac_tab.length_slider.id, "value"),
                            State(self.exac_tab.genes_textbox.id, "value"),
                            State(self.sims_tab.genes_update_button.id, "n_clicks"),
@@ -302,6 +306,7 @@ class TwoTabLayout(DashLayout):
         self.tag_callback(self.transfer_gene_select_params_callback("exac"),
                           [Output(self.exac_tab.func_dropdown.id, "value"),
                            Output(self.exac_tab.geneset_dropdown.id, "value"),
+                           Output(self.exac_tab.quality_dropdown.id, "value"),
                            Output(self.exac_tab.length_slider.id, "value"),
                            Output(self.exac_tab.genes_textbox.id, "value"),
                            Output(self.exac_tab.genes_update_button.id, "n_clicks"),
@@ -311,6 +316,7 @@ class TwoTabLayout(DashLayout):
                           [Input(self.tabs.id, "value")],
                           [State(self.sims_tab.func_dropdown.id, "value"),
                            State(self.sims_tab.geneset_dropdown.id, "value"),
+                           State(self.sims_tab.quality_dropdown.id, "value"),
                            State(self.sims_tab.length_slider.id, "value"),
                            State(self.sims_tab.genes_textbox.id, "value"),
                            State(self.exac_tab.genes_update_button.id, "n_clicks"),
@@ -331,13 +337,13 @@ class TwoTabLayout(DashLayout):
 
     @staticmethod
     def transfer_gene_select_params_callback(target):
-        def transfer_gene_select_params(tab, func, geneset, L_boundaries,
+        def transfer_gene_select_params(tab, func, geneset, quality, L_boundaries,
                                         box_text, button_clicks,
                                         upload_data, upload_filename,
                                         box_label, upload_label):
             if tab != target:
                 raise PreventUpdate
-            return (func, geneset, L_boundaries,
+            return (func, geneset, quality, L_boundaries,
                     box_text if box_label else no_update,
                     button_clicks + 1 if box_label else no_update,
                     upload_data if upload_label else no_update,

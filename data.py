@@ -12,8 +12,9 @@ SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "sims",
                                  "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L:.1f}.tsv")
 
 LIKELIHOOD_FILE = "ExAC_63K_prf_supertennessen_inference.tsv"
-
-GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020']
+HIQUAL_GENESET_NAME = "clinvar_atleast2_2plus"
+GENESETS = ['all', 'haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020',
+            HIQUAL_GENESET_NAME]
 
 GENESETS_DICT = {}
 
@@ -161,7 +162,7 @@ def load_unfiltered_df(likelihood, demography):
     return pd.read_table(filename)
 
 
-def filter_df(df, func, genelist, min_L, max_L):
+def filter_df(df, func, genelist, quality, min_L, max_L):
     selector = df.func == func
     selector &= df.U.between(10**(min_L-8), 10**(max_L-8))
     if genelist != "all":
@@ -169,6 +170,10 @@ def filter_df(df, func, genelist, min_L, max_L):
             selector &= df.gene.isin(genelist)
         else:
             selector &= df.gene.isin(GENESETS_DICT[genelist])
+    if quality == "high":
+        selector &= df.gene.isin(GENESETS_DICT[HIQUAL_GENESET_NAME])
+    elif quality == "low":
+        selector &= ~df.gene.isin(GENESETS_DICT[HIQUAL_GENESET_NAME])
     return df.loc[selector]
 
 
@@ -195,15 +200,15 @@ def extract_histogram_empirical(filtered_df):
 
 
 @lru_cache(maxsize=None)
-def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
-    geneset_df = load_filtered_df(demography, func, geneset, likelihood, min_L, max_L)
+def load_exac_data(likelihood, demography, func, geneset, quality, min_L, max_L):
+    geneset_df = load_filtered_df(demography, func, geneset, quality, likelihood, min_L, max_L)
     geneset_histogram = np.array(extract_histogram_empirical(geneset_df), dtype=float)
     geneset_count = len(geneset_df)
     if geneset == "all":
         ones = np.ones_like(geneset_histogram)
         ones[np.isnan(geneset_histogram)] = np.nan
         return geneset_histogram, ones, ones
-    all_df = load_filtered_df(demography, func, "all", likelihood, min_L, max_L)
+    all_df = load_filtered_df(demography, func, "all", "all", likelihood, min_L, max_L)
     all_count = len(all_df)
     all_histogram = np.array(extract_histogram_empirical(all_df), dtype=float)
     complement_histogram = all_histogram - geneset_histogram
@@ -232,9 +237,9 @@ def load_exac_data(likelihood, demography, func, geneset, min_L, max_L):
     return geneset_histogram, odds_ratios, p_values
 
 
-def load_filtered_df(demography, func, genelist, likelihood, min_L, max_L):
+def load_filtered_df(demography, func, genelist, quality, likelihood, min_L, max_L):
     unfiltered_df = load_unfiltered_df(likelihood, demography)
-    filtered_df = filter_df(unfiltered_df, func, genelist, min_L, max_L)
+    filtered_df = filter_df(unfiltered_df, func, genelist, quality, min_L, max_L)
     return filtered_df
 
 
@@ -252,8 +257,8 @@ def make_heatmap_single_sim(likelihood, ref, sim, s, h, L):
                            'frac': frac})
 
 
-def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, max_L):
-    filtered_df = load_filtered_df(ref, func, geneset, likelihood, min_L, max_L)
+def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, quality, min_L, max_L):
+    filtered_df = load_filtered_df(ref, func, geneset, quality, likelihood, min_L, max_L)
     L = filtered_df.U.transform('log10') + 8.0
     try:
         histogram = load_sim_data(likelihood, ref, sim, s, h, L)
@@ -265,9 +270,9 @@ def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, min_L, m
                            "frac": frac})
 
 
-def make_heatmap_empirical(likelihood, demography, func, genelist, min_L, max_L, z_variable="histogram"):
+def make_heatmap_empirical(likelihood, demography, func, genelist, quality, min_L, max_L, z_variable="histogram"):
     try:
-        histogram, odds_ratio, p_value = load_exac_data(likelihood, demography, func, genelist, min_L, max_L)
+        histogram, odds_ratio, p_value = load_exac_data(likelihood, demography, func, genelist, quality, min_L, max_L)
     except ValueError:
         histogram = get_null_histogram()
         odds_ratio = get_null_histogram()
