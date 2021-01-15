@@ -38,6 +38,10 @@ class DashLayout:
                 app.callback(*args, **kwargs)(callback_method)
             self.callbacks_registered = True
 
+    def attach_to_app(self, app):
+        app.layout = self.render_layout
+        self.register_callbacks(app)
+
 
 class GeneSelectControls(DashLayout):
     def __init__(self, *args, **kwargs):
@@ -130,10 +134,6 @@ class GeneSelectControls(DashLayout):
 class SimsTab(GeneSelectControls):
     def __init__(self):
         super().__init__(id_suffix="-sim")
-        with open(os.path.join(os.path.dirname(__file__), "assets", "meta.json")) as meta_file:
-            meta = json.load(meta_file)
-        self.meta_store = self.make_component(dcc.Store, "meta", data=meta)
-        self.dummy_div = self.make_component(html.Div, "dummy")
         self.heatmap = self.make_component(dcc.Graph, 'heatmap')
         self.h_slider = self.make_component(dcc.Slider, "h-slider", min=0, max=3,
                            marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
@@ -175,21 +175,10 @@ class SimsTab(GeneSelectControls):
                           [Input(self.length_select_mode.id, 'value')]
                           )
 
-    def register_callbacks(self, app):
-        super().register_callbacks(app)
-        app.clientside_callback("""function(meta) { 
-                    alert('browser thinks app version is ' + meta.appVersion);
-                    fetch('%s').then(response => response.json())
-                    .then(jsonData => alert('feched json thinks app version is ' + jsonData.appVersion));
-                }
-                """ % app.get_asset_url("meta.json"),
-                    Output(self.dummy_div.id, "children"),
-                    [Input(self.meta_store.id, "data")])
 
 
     def render_layout(self):
         return html.Div(children=[
-                        self.meta_store, self.dummy_div,
                         html.Div(children=[
                             html.Label("h"), self.h_slider,
                             html.Br(),
@@ -385,3 +374,28 @@ class TwoTabLayout(DashLayout):
                     upload_filename if upload_label else no_update,
                     {"is_loading": True} )
         return transfer_gene_select_params
+
+
+class CacheBuster(DashLayout):
+    def __init__(self, sublayout, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sublayout = sublayout
+        with open(os.path.join(os.path.dirname(__file__), "assets", "meta.json")) as meta_file:
+            meta = json.load(meta_file)
+        self.meta_store = self.make_component(dcc.Store, "meta", data=meta)
+        self.dummy_div = self.make_component(html.Div, "dummy")
+
+    def render_layout(self):
+        return html.Div([self.sublayout.render_layout(), self.meta_store, self.dummy_div])
+
+    def register_callbacks(self, app):
+        super().register_callbacks(app)
+        self.sublayout.register_callbacks(app)
+        app.clientside_callback("""function(meta) { 
+                    alert('browser thinks app version is ' + meta.appVersion);
+                    fetch('%s').then(response => response.json())
+                    .then(jsonData => alert('feched json thinks app version is ' + jsonData.appVersion));
+                }
+                """ % app.get_asset_url("meta.json"),
+                    Output(self.dummy_div.id, "children"),
+                    [Input(self.meta_store.id, "data")])
