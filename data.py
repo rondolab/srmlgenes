@@ -126,8 +126,10 @@ def barplot_figure(data_row, y_variable):
                         "enrichment: %{customdata[3]:0.2f} (p-value = %{customdata[4]:0.2g})"\
                         "<extra></extra>"
         if y_variable == "p_value":
-            y = -np.log10([data_row["p_values"][strongadd_index],
-                           data_row["p_values"][strongrec_index]])
+            y = np.copysign(np.log10([data_row["p_values"][strongadd_index],
+                                      data_row["p_values"][strongrec_index]]),
+                            np.log([data_row["odds_ratios"][strongadd_index],
+                                    data_row["odds_ratios"][strongrec_index]]))
         elif y_variable == "odds_ratio":
             y = np.log([data_row["odds_ratios"][strongadd_index],
                         data_row["odds_ratios"][strongrec_index]])
