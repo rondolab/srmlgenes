@@ -3,13 +3,14 @@ import re
 
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_daq as daq
 import numpy as np
 from dash import callback_context, no_update
 from dash.dependencies import Output, Input, State
 from dash.exceptions import PreventUpdate
 
 from data import make_heatmap_single_sim, make_heatmap_geneset_sim, \
-    make_heatmap_empirical
+    make_plot_empirical
 
 S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
 H_VALUES = ['0.0', '0.1', '0.3', '0.5']
@@ -226,6 +227,7 @@ class SimsTab(GeneSelectControls):
 class ExacTab(GeneSelectControls):
     def __init__(self):
         super().__init__(id_suffix="-exac")
+        self.heatmap_mode_switch = self.make_component(daq.ToggleSwitch, "heatmap-switch", value=True)
         self.color_scheme_buttons = self.make_component(dcc.RadioItems, "color-buttons",
                        options=[{'label': 'Histogram', 'value': 'histogram'},
                                 {'label': 'Enrichment (log odds ratio)', 'value': 'odds_ratio'},
@@ -239,6 +241,7 @@ class ExacTab(GeneSelectControls):
                            Input(self.quality_dropdown.id, 'value'),
                            Input(self.length_slider.id, 'value'),
                            Input(self.color_scheme_buttons.id, 'value'),
+                           Input(self.heatmap_mode_switch.id, 'value'),
                            Input(self.genes_store.id, 'data')])
         self.tag_callback(self.enable_disable_color_select,
                           [Output(self.color_scheme_buttons.id, "options"),
@@ -246,11 +249,15 @@ class ExacTab(GeneSelectControls):
                           [Input(self.geneset_dropdown.id, "value"),
                            Input(self.quality_dropdown.id, "value")],
                           [State(self.color_scheme_buttons.id, "options")])
+        self.tag_callback(self.do_toggle,
+                          Output(self.heatmap_mode_switch.id, "label"),
+                          [Input(self.heatmap_mode_switch.id, "value")])
 
     def render_layout(self):
-        return html.Div([html.Div([html.Label("Color Scheme"),
+        return html.Div([html.Div([html.Label("Values to Plot"),
                                 self.color_scheme_buttons] +
-                                self.render_gene_select_sublayout(),
+                                self.render_gene_select_sublayout() +
+                                [self.heatmap_mode_switch],
                                 style={'width': '30%',
                                         'margin-left': '5%',
                                         'margin-right': '5%',
@@ -265,13 +272,13 @@ class ExacTab(GeneSelectControls):
                                         'float': 'right'})],
                 style={'width': '800px'})
 
-    def update_heatmap(self, func, geneset, quality, Ls, z_variable, custom_genelist):
+    def update_heatmap(self, func, geneset, quality, Ls, z_variable, heatmap_mode, custom_genelist):
         if geneset == "custom":
             if custom_genelist:
                 geneset = frozenset(custom_genelist)
             else:
                 raise PreventUpdate
-        return make_heatmap_empirical("prf", "supertennessen", func, geneset, quality, Ls[0], Ls[1], z_variable)
+        return make_plot_empirical("prf", "supertennessen", func, geneset, quality, Ls[0], Ls[1], z_variable, heatmap_mode)
 
     def enable_disable_color_select(self, geneset, quality, options):
         if geneset is None and quality is None:
@@ -283,6 +290,12 @@ class ExacTab(GeneSelectControls):
             for option in options:
                 option["disabled"] = False
             return options, no_update
+
+    def do_toggle(self, switch_state):
+        if switch_state:
+            return "Showing all selection classes"
+        else:
+            return "Showing only strong selection"
 
 class TwoTabLayout(DashLayout):
     def __init__(self):

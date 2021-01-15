@@ -96,6 +96,53 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
     return extract_histogram_sims(df)
 
 
+def barplot_figure(data_row, y_variable):
+    total_genes = np.nansum(data_row["histogram"])
+    strongadd_index = (3,4)
+    strongrec_index = (3,0)
+    if y_variable == "histogram":
+        y = [data_row["histogram"][strongadd_index],
+             data_row["histogram"][strongrec_index]]
+        customdata = [[0.5, data_row["frac"][strongadd_index]],
+                      [0.0, data_row["frac"][strongrec_index]]]
+        hovertemplate = "h: %{customdata[0]:.1}<br />"\
+                        "s: -10⁻¹<br />"\
+                        f"genes: %{{y}} / {total_genes:0.0f} (%{{customdata[1]:.1%}})"\
+                        "<extra></extra>"
+    else:
+        customdata = [[0.5,
+                       data_row["histogram"][strongadd_index],
+                       data_row["frac"][strongadd_index],
+                       data_row["odds_ratios"][strongadd_index],
+                       data_row["p_values"][strongadd_index]],
+                      [0.0,
+                       data_row["histogram"][strongadd_index],
+                       data_row["frac"][strongrec_index],
+                       data_row["odds_ratios"][strongrec_index],
+                       data_row["p_values"][strongrec_index]]]
+        hovertemplate = "h: %{customdata[0]}<br />"\
+                        "s: -10⁻¹<br />"\
+                        f"genes: %{{customdata[1]}} / {total_genes:0.0f} (%{{customdata[2]:.1%}})<br />"\
+                        "enrichment: %{customdata[3]:0.2f} (p-value = %{customdata[4]:0.2g})"\
+                        "<extra></extra>"
+        if y_variable == "p_value":
+            y = -np.log10([data_row["p_values"][strongadd_index],
+                           data_row["p_values"][strongrec_index]])
+        elif y_variable == "odds_ratio":
+            y = np.log([data_row["odds_ratios"][strongadd_index],
+                        data_row["odds_ratios"][strongrec_index]])
+
+    return go.Figure(data=go.Bar(x=["Strong Additive", "Strong Recessive"],
+                                 y=y,
+                                 customdata=customdata,
+                                 hovertemplate=hovertemplate),
+                         layout=go.Layout(width=800, height=600,
+                                          xaxis_type='category', yaxis_type='linear'))
+
+def forestplot_figure(data_row):
+    pass
+
+
 def heatmap_figure(heatmap_data_row, z_variable="histogram"):
     total_genes = np.nansum(heatmap_data_row["histogram"])
     if z_variable == "histogram":
@@ -207,7 +254,7 @@ def load_exac_data(likelihood, demography, func, geneset, quality, min_L, max_L)
     if geneset is None:
         ones = np.ones_like(geneset_histogram)
         ones[np.isnan(geneset_histogram)] = np.nan
-        return geneset_histogram, ones, ones
+        return geneset_histogram, ones, ones, ones
     all_df = load_filtered_df(demography, func, None, None, likelihood, min_L, max_L)
     all_count = len(all_df)
     all_histogram = np.array(extract_histogram_empirical(all_df), dtype=float)
@@ -222,6 +269,7 @@ def load_exac_data(likelihood, demography, func, geneset, quality, min_L, max_L)
 
     with np.errstate(divide='ignore', invalid='ignore'):
         odds_ratios = (a_ary * d_ary) / (b_ary * c_ary)
+        logodds_stderrs = np.sqrt(1/a_ary + 1/b_ary + 1/c_ary + 1/d_ary)
 
     with np.nditer([a_ary, b_ary, c_ary, d_ary, None]) as it:
         for a, b, c, d, p_value in it:
@@ -234,7 +282,7 @@ def load_exac_data(likelihood, demography, func, geneset, quality, min_L, max_L)
             p_value[...] = p
         p_values = it.operands[4]
 
-    return geneset_histogram, odds_ratios, p_values
+    return geneset_histogram, odds_ratios, logodds_stderrs, p_values
 
 
 def load_filtered_df(demography, func, genelist, quality, likelihood, min_L, max_L):
@@ -270,16 +318,22 @@ def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, quality,
                            "frac": frac})
 
 
-def make_heatmap_empirical(likelihood, demography, func, genelist, quality, min_L, max_L, z_variable="histogram"):
+def make_plot_empirical(likelihood, demography, func, genelist, quality, min_L, max_L, z_variable="histogram", heatmap=True):
     try:
-        histogram, odds_ratio, p_value = load_exac_data(likelihood, demography, func, genelist, quality, min_L, max_L)
+        histogram, odds_ratio, logodds_stderr, p_value = load_exac_data(likelihood, demography, func, genelist, quality, min_L, max_L)
     except ValueError:
         histogram = get_null_histogram()
         odds_ratio = get_null_histogram()
         p_value = get_null_histogram()
     with np.errstate(divide="ignore", invalid="ignore"):
         frac = histogram / np.nansum(histogram)
-    return heatmap_figure({"histogram": histogram,
-                           "frac": frac,
-                           "odds_ratios": odds_ratio,
-                           "p_values": p_value}, z_variable)
+    if heatmap:
+        return heatmap_figure({"histogram": histogram,
+                               "frac": frac,
+                               "odds_ratios": odds_ratio,
+                               "p_values": p_value}, z_variable)
+    else:
+        return barplot_figure({"histogram": histogram,
+                               "frac": frac,
+                               "odds_ratios": odds_ratio,
+                               "p_values": p_value}, z_variable)
