@@ -391,11 +391,13 @@ class CacheBuster(DashLayout):
     def register_callbacks(self, app):
         super().register_callbacks(app)
         self.sublayout.register_callbacks(app)
-        app.clientside_callback("""function(meta) { 
-                    alert('browser thinks app version is ' + meta.appVersion);
-                    fetch('%s').then(response => response.json())
-                    .then(jsonData => alert('feched json thinks app version is ' + jsonData.appVersion));
-                }
-                """ % app.get_asset_url("meta.json"),
+        app.clientside_callback("""function(meta) {
+var cachedVersion = meta.appVersion
+fetch('%s').then(response => response.json())
+           .then(jsonData => jsonData.appVersion)
+           .then(fetchedVersion => { if (cachedVersion != fetchedVersion) {
+                    alert("Your browser has cached an old version of this app! Try clearing your browser cache if something doesn't work correctly.");
+                    }});
+}""" % app.get_asset_url("meta.json"),
                     Output(self.dummy_div.id, "children"),
                     [Input(self.meta_store.id, "data")])
