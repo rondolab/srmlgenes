@@ -375,29 +375,3 @@ class TwoTabLayout(DashLayout):
                     {"is_loading": True} )
         return transfer_gene_select_params
 
-
-class CacheBuster(DashLayout):
-    def __init__(self, sublayout, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.sublayout = sublayout
-        with open(os.path.join(os.path.dirname(__file__), "assets", "meta.json")) as meta_file:
-            meta = json.load(meta_file)
-        self.meta_store = self.make_component(dcc.Store, "meta", data=meta)
-        self.dummy_div = self.make_component(html.Div, "dummy")
-
-    def render_layout(self):
-        return html.Div([self.sublayout.render_layout(), self.meta_store, self.dummy_div])
-
-    def register_callbacks(self, app):
-        super().register_callbacks(app)
-        self.sublayout.register_callbacks(app)
-        app.clientside_callback("""function(meta) {
-var cachedVersion = meta.appVersion
-fetch('%s').then(response => response.json())
-           .then(jsonData => jsonData.appVersion)
-           .then(fetchedVersion => { if (cachedVersion != fetchedVersion) {
-                    alert("Your browser has cached an old version of this app! Try clearing your browser cache if something doesn't work correctly.");
-                    }});
-}""" % app.get_asset_url("meta.json"),
-                    Output(self.dummy_div.id, "children"),
-                    [Input(self.meta_store.id, "data")])
