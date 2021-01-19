@@ -1,5 +1,7 @@
 import base64
 import re
+import json
+import os.path
 
 import dash_core_components as dcc
 import dash_html_components as html
@@ -36,6 +38,10 @@ class DashLayout:
             for callback_method, args, kwargs in self.callbacks:
                 app.callback(*args, **kwargs)(callback_method)
             self.callbacks_registered = True
+
+    def attach_to_app(self, app):
+        app.layout = self.render_layout
+        self.register_callbacks(app)
 
 
 class GeneSelectControls(DashLayout):
@@ -170,6 +176,8 @@ class SimsTab(GeneSelectControls):
                           [Input(self.length_select_mode.id, 'value')]
                           )
 
+
+
     def render_layout(self):
         return html.Div(children=[
                         html.Div(children=[
@@ -187,7 +195,7 @@ class SimsTab(GeneSelectControls):
                                   'display': 'inline-block'}),
             html.Div(className="loader-wrapper",
                      children=[dcc.Loading(self.heatmap,
-                                              type="circle",
+                                              type="dot",
                                               style={'margin-left': "60%"})],
                      style={'width': '60%',
                             'display': 'inline-block',
@@ -363,6 +371,7 @@ class TwoTabLayout(DashLayout):
         self.sims_tab.register_callbacks(app)
         self.exac_tab.register_callbacks(app)
 
+
     @staticmethod
     def transfer_gene_select_params_callback(target):
         def transfer_gene_select_params(tab, func, geneset, quality, L_boundaries,
@@ -378,3 +387,4 @@ class TwoTabLayout(DashLayout):
                     upload_filename if upload_label else no_update,
                     {"is_loading": True} )
         return transfer_gene_select_params
+
