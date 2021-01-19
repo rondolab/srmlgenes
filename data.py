@@ -138,6 +138,7 @@ def barplot_figure(data_row, y_variable):
             yaxis_title = "-log10 p value"
             y = -np.log10([data_row["p_values"][strongadd_index],
                                       data_row["p_values"][strongrec_index]])
+            hline = -np.log10(0.05)
         elif y_variable == "odds_ratio":
             yaxis_title = "log odds ratio"
             y = np.log([data_row["odds_ratios"][strongadd_index],
@@ -145,6 +146,7 @@ def barplot_figure(data_row, y_variable):
             extra_args["error_y"] = {"array":
                                          [1.96*data_row["logodds_stderrs"][strongadd_index],
                                           1.96*data_row["logodds_stderrs"][strongadd_index]]}
+            hline = 0.0
 
     fig = go.Figure(data=go.Bar(x=["Strong Additive", "Strong Recessive"],
                                  y=y,
@@ -155,8 +157,10 @@ def barplot_figure(data_row, y_variable):
                                           xaxis_type='category',
                                           yaxis_type='linear',
                                           yaxis_title=yaxis_title))
-    if y_variable == "odds_ratio":
-        fig.add_hline(0.0, line={'color': 'black', 'dash': 'dash'})
+    try:
+        fig.add_hline(hline, line={'color': 'black', 'dash': 'dash'})
+    except NameError:
+        pass
     return fig
 
 def forestplot_figure(data_row):
