@@ -111,7 +111,7 @@ def barplot_figure(data_row, y_variable):
                         f"genes: %{{y}} / {total_genes:0.0f} (%{{customdata[1]:.1%}})"\
                         "<extra></extra>"
         yaxis_title = "Number of genes"
-        extra_args = {}
+        extra_args = {"error_y": {'array': 1.96*np.sqrt(y) }}
     else:
         customdata = [[0.5,
                        data_row["histogram"][strongadd_index],
@@ -142,6 +142,9 @@ def barplot_figure(data_row, y_variable):
             yaxis_title = "log odds ratio"
             y = np.log([data_row["odds_ratios"][strongadd_index],
                         data_row["odds_ratios"][strongrec_index]])
+            extra_args["error_y"] = {"array":
+                                         [1.96*data_row["logodds_stderrs"][strongadd_index],
+                                          1.96*data_row["logodds_stderrs"][strongadd_index]]}
 
     fig = go.Figure(data=go.Bar(x=["Strong Additive", "Strong Recessive"],
                                  y=y,
@@ -353,4 +356,5 @@ def make_plot_empirical(likelihood, demography, func, genelist, quality, min_L, 
         return barplot_figure({"histogram": histogram,
                                "frac": frac,
                                "odds_ratios": odds_ratio,
+                               "logodds_stderrs": logodds_stderr,
                                "p_values": p_value}, z_variable)
