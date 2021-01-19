@@ -195,7 +195,7 @@ class SimsTab(GeneSelectControls):
                                   'display': 'inline-block'}),
             html.Div(className="loader-wrapper",
                      children=[dcc.Loading(self.heatmap,
-                                              type="dot",
+                                              type="circle",
                                               style={'margin-left': "60%"})],
                      style={'width': '60%',
                             'display': 'inline-block',
