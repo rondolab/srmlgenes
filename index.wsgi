@@ -4,7 +4,7 @@ import sys
 import dash_core_components as dcc
 
 app_dir = os.path.dirname(__file__)
-sys.path.append(os.path.join(app_dir, "venv"))
+sys.path.append(os.path.join(app_dir, "venv", "lib", "python3.8", "site-"))
 sys.path.append(app_dir)
 from myapp import create_app
 from layouts import TwoTabLayout
