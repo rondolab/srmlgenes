@@ -1,11 +1,13 @@
 import os
 import sys
 
+app_dir = os.path.dirname(__file__)
+virtualenv_activate_script = os.path.join(app_dir, "venv", "bin", "activate_this.py")
+exec(open(virtualenv_activate_script).read(), {'__file__': virtualenv_activate_script})
+sys.path.append(app_dir)
+
 import dash_core_components as dcc
 
-app_dir = os.path.dirname(__file__)
-sys.path.append(os.path.join(app_dir, "venv"))
-sys.path.append(app_dir)
 from myapp import create_app
 from layouts import TwoTabLayout
 
