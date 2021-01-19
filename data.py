@@ -5,6 +5,7 @@ from functools import lru_cache, wraps
 import numpy as np
 import pandas as pd
 from plotly import graph_objects as go
+import plotly.express as px
 import mpmath
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "dominance_data")
@@ -109,6 +110,8 @@ def barplot_figure(data_row, y_variable):
                         "s: -10⁻¹<br />"\
                         f"genes: %{{y}} / {total_genes:0.0f} (%{{customdata[1]:.1%}})"\
                         "<extra></extra>"
+        yaxis_title = "Number of genes"
+        extra_args = {}
     else:
         customdata = [[0.5,
                        data_row["histogram"][strongadd_index],
@@ -125,21 +128,33 @@ def barplot_figure(data_row, y_variable):
                         f"genes: %{{customdata[1]}} / {total_genes:0.0f} (%{{customdata[2]:.1%}})<br />"\
                         "enrichment: %{customdata[3]:0.2f} (p-value = %{customdata[4]:0.2g})"\
                         "<extra></extra>"
+        blue = px.colors.qualitative.Plotly[0]
+        red = px.colors.qualitative.Plotly[1]
+        extra_args = {"marker_color":
+                          [red if data_row["odds_ratios"][strongadd_index] < 1 else blue,
+                           red if data_row["odds_ratios"][strongrec_index] < 1 else blue]}
+
         if y_variable == "p_value":
-            y = np.copysign(np.log10([data_row["p_values"][strongadd_index],
-                                      data_row["p_values"][strongrec_index]]),
-                            np.log([data_row["odds_ratios"][strongadd_index],
-                                    data_row["odds_ratios"][strongrec_index]]))
+            yaxis_title = "-log10 p value"
+            y = -np.log10([data_row["p_values"][strongadd_index],
+                                      data_row["p_values"][strongrec_index]])
         elif y_variable == "odds_ratio":
+            yaxis_title = "log odds ratio"
             y = np.log([data_row["odds_ratios"][strongadd_index],
                         data_row["odds_ratios"][strongrec_index]])
 
-    return go.Figure(data=go.Bar(x=["Strong Additive", "Strong Recessive"],
+    fig = go.Figure(data=go.Bar(x=["Strong Additive", "Strong Recessive"],
                                  y=y,
                                  customdata=customdata,
-                                 hovertemplate=hovertemplate),
+                                 hovertemplate=hovertemplate,
+                                **extra_args),
                          layout=go.Layout(width=800, height=600,
-                                          xaxis_type='category', yaxis_type='linear'))
+                                          xaxis_type='category',
+                                          yaxis_type='linear',
+                                          yaxis_title=yaxis_title))
+    if y_variable == "odds_ratio":
+        fig.add_hline(0.0, line={'color': 'black', 'dash': 'dash'})
+    return fig
 
 def forestplot_figure(data_row):
     pass
