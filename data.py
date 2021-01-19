@@ -14,7 +14,7 @@ SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "sims",
 
 LIKELIHOOD_FILE = "ExAC_63K_prf_supertennessen_inference.tsv"
 HIQUAL_GENESET_NAME = "clinvar_atleast2_2plus"
-GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020',
+GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020', "Molly_recessive_lethal",
             HIQUAL_GENESET_NAME]
 
 GENESETS_DICT = {}
@@ -100,7 +100,7 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
 def barplot_figure(data_row, y_variable):
     total_genes = np.nansum(data_row["histogram"])
     strongadd_index = (3,4)
-    strongrec_index = (3,0)
+    strongrec_index = (0,4)
     if y_variable == "histogram":
         y = [data_row["histogram"][strongadd_index],
              data_row["histogram"][strongrec_index]]
