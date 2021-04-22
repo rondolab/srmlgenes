@@ -138,7 +138,7 @@ class SimsTab(GeneSelectControls):
     def __init__(self):
         super().__init__(id_suffix="-sim")
         self.heatmap = self.make_component(dcc.Graph, 'heatmap')
-        self.caption = self.make_component(html.Label, 'caption', sim_caption_template.format(plot_type="histogram",
+        self.caption = self.make_component(dcc.Markdown, 'caption', sim_caption_template.format(plot_type="histogram",
                                                                                               s="0", h="N/A", length="1000 sites"))
         self.h_slider = self.make_component(dcc.Slider, "h-slider", min=0, max=3,
                            marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
@@ -186,7 +186,7 @@ class SimsTab(GeneSelectControls):
         return html.Div(children=[
                         html.Div(children=[
                             self.caption,
-                            html.Label("*Adjust the controls below to change these values.*"),
+                            dcc.Markdown("*Adjust the controls below to change these values.*"),
                             html.Label("h"), self.h_slider,
                             html.Br(),
                             html.Label("s"), self.s_slider,
