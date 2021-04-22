@@ -131,15 +131,15 @@ class GeneSelectControls(DashLayout):
     def render_layout(self):
         return self.render_gene_select_sublayout()
 
-sim_caption_template = "<b>{plot_type}</b> of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
-                   "shown for <b>simulated</b> genes with s=<b>{s}</b>, h=<b>{h}</b>, and length <b>{length}</b>."
+sim_caption_template = "**{plot_type}** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
+                   "shown for **simulated** genes with s=**{s}**, h=**{h}**, and length **{length}**."
 
 class SimsTab(GeneSelectControls):
     def __init__(self):
         super().__init__(id_suffix="-sim")
         self.heatmap = self.make_component(dcc.Graph, 'heatmap')
         self.caption = self.make_component(html.Label, 'caption', sim_caption_template.format(plot_type="histogram",
-                                                                                              s="0", h="N/A", length="10<sup>3</sup> sites"))
+                                                                                              s="0", h="N/A", length="1000 sites"))
         self.h_slider = self.make_component(dcc.Slider, "h-slider", min=0, max=3,
                            marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
                            disabled=True, value=3)
@@ -186,6 +186,7 @@ class SimsTab(GeneSelectControls):
         return html.Div(children=[
                         html.Div(children=[
                             self.caption,
+                            html.Label("*Adjust the controls below to change these values.*"),
                             html.Label("h"), self.h_slider,
                             html.Br(),
                             html.Label("s"), self.s_slider,
