@@ -15,6 +15,7 @@ from data import make_heatmap_single_sim, make_heatmap_geneset_sim, \
     make_plot_empirical, GENESET_LABELS_MAPPING
 
 S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
+S_LABELS = {0: "Neutral", 1: '-10⁻⁴', 2: '-10⁻³', 3: '-10⁻²', 4: '-10⁻¹'}
 H_VALUES = ['0.0', '0.1', '0.3', '0.5']
 
 
@@ -135,13 +136,13 @@ single_sim_caption_template = "**Histogram** of maximum likelihood values observ
                    "shown for **simulated** genes of length **{length}** sites, with {selection}."
 empirical_sim_caption_template = "**Histogram** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
                               "shown for **simulated** genes with lengths distributed according to the empirical distribution of " \
-                              " **{func}** sites in **{geneset}** genes (restricted to **{L_range}**), with {selection}."
+                              " **{func}** sites in **{geneset}** genes (restricted to lengths of **{L_range}**), with {selection}."
 
 class SimsTab(GeneSelectControls):
     def __init__(self):
         super().__init__(id_suffix="-sim")
         self.heatmap = self.make_component(dcc.Graph, 'heatmap')
-        self.caption = self.make_component(dcc.Markdown, 'caption', single_sim_caption_template.format(selection="s=**0**", length="1000"))
+        self.caption = self.make_component(dcc.Markdown, 'caption', "**Loading...**")
         self.h_slider = self.make_component(dcc.Slider, "h-slider", min=0, max=3,
                            marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
                            disabled=True, value=3)
@@ -216,14 +217,14 @@ class SimsTab(GeneSelectControls):
             h_idx = 3
             selection_string = "s=**0**"
         else:
-            selection_string = f"s=**{S_VALUES[s_idx]:0.1}**, h=**{H_VALUES[h_idx]:0.1}**"
+            selection_string = f"s=**{S_LABELS[s_idx]}** and h=**{H_VALUES[h_idx]}**"
         if L_mode == "single":
             return (make_heatmap_single_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx],
                                             H_VALUES[h_idx], single_L),
                     single_sim_caption_template.format(selection=selection_string, length=int(10**single_L)))
         elif L_mode == "empirical":
             L_boundaries = np.clip(L_boundaries, 2.0, 5.0)
-            L_range_text = f"{10**L_boundaries[0]:d}-{10**L_boundaries[1]:d}"
+            L_range_text = f"{10**L_boundaries[0]:.0f}-{10**L_boundaries[1]:.0f}"
             if geneset == "custom":
                 if custom_genelist:
                     geneset = frozenset(custom_genelist)
