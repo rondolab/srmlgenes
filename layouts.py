@@ -12,7 +12,7 @@ from dash.dependencies import Output, Input, State
 from dash.exceptions import PreventUpdate
 
 from data import make_heatmap_single_sim, make_heatmap_geneset_sim, \
-    make_plot_empirical
+    make_plot_empirical, GENESET_LABELS_MAPPING
 
 S_VALUES = ['NEUTRAL', '-4.0', '-3.0', '-2.0', '-1.0']
 H_VALUES = ['0.0', '0.1', '0.3', '0.5']
@@ -131,15 +131,17 @@ class GeneSelectControls(DashLayout):
     def render_layout(self):
         return self.render_gene_select_sublayout()
 
-sim_caption_template = "**{plot_type}** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
-                   "shown for **simulated** genes with s=**{s}**, h=**{h}**, and length **{length}**."
+single_sim_caption_template = "**Histogram** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
+                   "shown for **simulated** genes of length **{length}** sites, with {selection}."
+empirical_sim_caption_template = "**Histogram** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
+                              "shown for **simulated** genes with lengths distributed according to the empirical distribution of " \
+                              " **{func}** sites in **{geneset}** genes (restricted to **{L_range}**), with {selection}."
 
 class SimsTab(GeneSelectControls):
     def __init__(self):
         super().__init__(id_suffix="-sim")
         self.heatmap = self.make_component(dcc.Graph, 'heatmap')
-        self.caption = self.make_component(dcc.Markdown, 'caption', sim_caption_template.format(plot_type="histogram",
-                                                                                              s="0", h="N/A", length="1000 sites"))
+        self.caption = self.make_component(dcc.Markdown, 'caption', single_sim_caption_template.format(selection="s=**0**", length="1000"))
         self.h_slider = self.make_component(dcc.Slider, "h-slider", min=0, max=3,
                            marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
                            disabled=True, value=3)
@@ -161,7 +163,8 @@ class SimsTab(GeneSelectControls):
                                                                self.render_gene_select_sublayout())
 
         self.tag_callback(self.update_heatmap,
-                          Output(self.heatmap.id, 'figure'),
+                          [Output(self.heatmap.id, 'figure'),
+                           Output(self.caption.id, 'children')],
                           [Input(self.h_slider.id, 'value'),
                            Input(self.s_slider.id, 'value'),
                            Input(self.func_dropdown.id, 'value'),
@@ -211,18 +214,35 @@ class SimsTab(GeneSelectControls):
     def update_heatmap(self, h_idx, s_idx, func, geneset, quality, L_boundaries, single_L, L_mode, custom_genelist):
         if s_idx == 0:
             h_idx = 3
+            selection_string = "s=**0**"
+        else:
+            selection_string = f"s=**{S_VALUES[s_idx]:0.1}**, h=**{H_VALUES[h_idx]:0.1}**"
         if L_mode == "single":
-            return make_heatmap_single_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx],
-                                           H_VALUES[h_idx], single_L)
+            return (make_heatmap_single_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx],
+                                            H_VALUES[h_idx], single_L),
+                    single_sim_caption_template.format(selection=selection_string, length=int(10**single_L)))
         elif L_mode == "empirical":
             L_boundaries = np.clip(L_boundaries, 2.0, 5.0)
+            L_range_text = f"{10**L_boundaries[0]:d}-{10**L_boundaries[1]:d}"
             if geneset == "custom":
                 if custom_genelist:
                     geneset = frozenset(custom_genelist)
+                    geneset_name = "your uploaded"
                 else:
                     raise PreventUpdate
-            return make_heatmap_geneset_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx], H_VALUES[h_idx],
-                                            func, geneset, quality, L_boundaries[0], L_boundaries[1])
+            else:
+                geneset_name = GENESET_LABELS_MAPPING[geneset]
+            if quality == "high":
+                geneset_name += " HQ"
+            elif quality == "low":
+                geneset_name += " LQ"
+            if func == "LOF_probably":
+                func_label = "LOF+damaging"
+            elif func == "synon":
+                func_label = "synonymous"
+            return (make_heatmap_geneset_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx], H_VALUES[h_idx],
+                                            func, geneset, quality, L_boundaries[0], L_boundaries[1]),
+                    empirical_sim_caption_template.format(L_range=L_range_text, geneset=geneset_name, func=func_label, selection=selection_string))
         else:
             raise ValueError(f"Unknown L selection mode {L_mode}")
 
