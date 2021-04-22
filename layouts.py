@@ -181,6 +181,9 @@ class SimsTab(GeneSelectControls):
     def render_layout(self):
         return html.Div(children=[
                         html.Div(children=[
+                            html.Div([html.B("Histogram"), html.Label(" of maximum likelihood values for each of the 17 selection and dominance classes in "),
+                                      html.B("simulated"),
+                                      html.Label(" genes with "), html.B("s = 0"), html.Label(" and length "), html.B("1000"), html.Label("sites.")]),
                             html.Label("h"), self.h_slider,
                             html.Br(),
                             html.Label("s"), self.s_slider,
