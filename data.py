@@ -352,15 +352,16 @@ def make_plot_empirical(likelihood, demography, func, genelist, quality, min_L, 
         histogram = get_null_histogram()
         odds_ratio = get_null_histogram()
         p_value = get_null_histogram()
+    n_genes = np.nansum(histogram)
     with np.errstate(divide="ignore", invalid="ignore"):
-        frac = histogram / np.nansum(histogram)
+        frac = histogram / n_genes
     if heatmap:
-        return heatmap_figure({"histogram": histogram,
+        return n_genes, heatmap_figure({"histogram": histogram,
                                "frac": frac,
                                "odds_ratios": odds_ratio,
                                "p_values": p_value}, z_variable)
     else:
-        return barplot_figure({"histogram": histogram,
+        return n_genes, barplot_figure({"histogram": histogram,
                                "frac": frac,
                                "odds_ratios": odds_ratio,
                                "logodds_stderrs": logodds_stderr,

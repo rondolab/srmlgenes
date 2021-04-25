@@ -260,6 +260,10 @@ class SimsTab(GeneSelectControls):
             raise ValueError(f"Unrecognized L selection mode {mode}")
 
 
+exac_histogram_template = "**Histogram** of maximum likelihood values observed in **{classes}** selection and dominance classes for **{geneset}** genes. Showing **{func}** sites only, restricted to mutational target sizes between **{L_range}** sites (N = **{N_genes:.0f}**)."
+exac_enrichment_template = "**{statistic}** for enrichment of maximum likelihood values observed in **{classes}** selection and dominance classes for **{geneset}** genes vs. the genome wide value, using only **{func}** sites. Restricted to mutational target sizes between **{L_range}** sites (N = **{N_genes:.0f}**)."
+
+
 class ExacTab(GeneSelectControls):
     def __init__(self):
         super().__init__(id_suffix="-exac")
@@ -269,9 +273,11 @@ class ExacTab(GeneSelectControls):
                                 {'label': 'Enrichment (log odds ratio)', 'value': 'odds_ratio'},
                                 {'label': 'Enrichment (p-value)', 'value': 'p_value'}],
                        value='histogram')
+        self.caption = self.make_component(dcc.Markdown, 'caption', "**Loading...**")
         self.heatmap = self.make_component(dcc.Graph, 'heatmap')
         self.tag_callback(self.update_heatmap,
-                          Output(self.heatmap.id, 'figure'),
+                          [Output(self.heatmap.id, 'figure'),
+                           Output(self.caption.id, 'children')],
                           [Input(self.func_dropdown.id, 'value'),
                            Input(self.geneset_dropdown.id, 'value'),
                            Input(self.quality_dropdown.id, 'value'),
@@ -290,7 +296,9 @@ class ExacTab(GeneSelectControls):
                           [Input(self.heatmap_mode_switch.id, "value")])
 
     def render_layout(self):
-        return html.Div([html.Div([html.Label("Values to Plot"),
+        return html.Div([html.Div([self.caption,
+                                dcc.Markdown("*Adjust the controls below to change these values.*"),
+                                html.Label("Values to Plot"),
                                 self.color_scheme_buttons] +
                                 self.render_gene_select_sublayout() +
                                 [self.heatmap_mode_switch],
@@ -312,9 +320,31 @@ class ExacTab(GeneSelectControls):
         if geneset == "custom":
             if custom_genelist:
                 geneset = frozenset(custom_genelist)
+                geneset_name = "user uploaded"
             else:
                 raise PreventUpdate
-        return make_plot_empirical("prf", "supertennessen", func, geneset, quality, Ls[0], Ls[1], z_variable, heatmap_mode)
+        else:
+            geneset_name = GENESET_LABELS_MAPPING[geneset]
+        if quality == "high":
+            geneset_name += " HQ"
+        elif quality == "low":
+            geneset_name += " LQ"
+        if func == "LOF_probably":
+            func_label = "LOF+damaging"
+        elif func == "synon":
+            func_label = "synonymous"
+        L_range_text = f"{10**Ls[0]:.0f}-{10**Ls[1]:.0f}"
+        if heatmap_mode:
+            classes = "each of the 17"
+        else:
+            classes = "strong additive and strong recessive"
+        n_genes, heatmap_fig = make_plot_empirical("prf", "supertennessen", func, geneset, quality, Ls[0], Ls[1], z_variable, heatmap_mode)
+        if z_variable == "histogram":
+            caption = exac_histogram_template.format(classes=classes, func=func_label, geneset=geneset_name, L_range=L_range_text, N_genes=n_genes)
+        else:
+            caption = exac_enrichment_template.format(statistic="Log odds ratios" if z_variable=="odds_ratio" else "Chi-squared p-values", classes=classes, func=func_label, geneset=geneset_name, L_range=L_range_text, N_genes=n_genes)
+        return heatmap_fig, caption
+
 
     def enable_disable_color_select(self, geneset, quality, options):
         if geneset is None and quality is None:
