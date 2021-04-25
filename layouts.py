@@ -132,11 +132,11 @@ class GeneSelectControls(DashLayout):
     def render_layout(self):
         return self.render_gene_select_sublayout()
 
-single_sim_caption_template = "**Histogram** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
-                   "shown for **simulated** genes of length **{length}** sites, with {selection}."
-empirical_sim_caption_template = "**Histogram** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
-                              "shown for **simulated** genes with lengths distributed according to the empirical distribution of " \
-                              " **{func}** sites in **{geneset}** genes (restricted to lengths of **{L_range}**), with {selection}."
+simulation_caption_template = "**Histogram** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
+                   "shown for **simulated** genes with {selection}."
+single_sim_length_template = " Showing all simulations with length  = **{length}** sites (N = **10000**)."
+empirical_sim_length_template = " Showing randomly selected simulations matching the distribution of mutational target sizes of " \
+        " **{func}** sites in **{geneset}** genes, restricted to **{L_range}** sites (N = **{N_sims:.0f}**)."
 
 class SimsTab(GeneSelectControls):
     def __init__(self):
@@ -218,17 +218,18 @@ class SimsTab(GeneSelectControls):
             selection_string = "s=**0**"
         else:
             selection_string = f"s=**{S_LABELS[s_idx]}** and h=**{H_VALUES[h_idx]}**"
+        caption = simulation_caption_template.format(selection=selection_string)
         if L_mode == "single":
             return (make_heatmap_single_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx],
                                             H_VALUES[h_idx], single_L),
-                    single_sim_caption_template.format(selection=selection_string, length=int(10**single_L)))
+                    caption + single_sim_length_template.format(length=int(10**single_L)))
         elif L_mode == "empirical":
             L_boundaries = np.clip(L_boundaries, 2.0, 5.0)
             L_range_text = f"{10**L_boundaries[0]:.0f}-{10**L_boundaries[1]:.0f}"
             if geneset == "custom":
                 if custom_genelist:
                     geneset = frozenset(custom_genelist)
-                    geneset_name = "your uploaded"
+                    geneset_name = "user uploaded"
                 else:
                     raise PreventUpdate
             else:
@@ -241,9 +242,9 @@ class SimsTab(GeneSelectControls):
                 func_label = "LOF+damaging"
             elif func == "synon":
                 func_label = "synonymous"
-            return (make_heatmap_geneset_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx], H_VALUES[h_idx],
-                                            func, geneset, quality, L_boundaries[0], L_boundaries[1]),
-                    empirical_sim_caption_template.format(L_range=L_range_text, geneset=geneset_name, func=func_label, selection=selection_string))
+            n_genes, heatmap_fig = make_heatmap_geneset_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx], H_VALUES[h_idx], func, geneset, quality, L_boundaries[0], L_boundaries[1])
+            return (heatmap_fig,
+                    caption + empirical_sim_length_template.format(L_range=L_range_text, geneset=geneset_name, func=func_label, N_sims=n_genes))
         else:
             raise ValueError(f"Unknown L selection mode {L_mode}")
 

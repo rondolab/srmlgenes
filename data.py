@@ -16,7 +16,7 @@ LIKELIHOOD_FILE = "ExAC_63K_prf_supertennessen_inference.tsv"
 HIQUAL_GENESET_NAME = "clinvar_atleast2_2plus"
 GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020', "Molly_recessive_lethal",
             HIQUAL_GENESET_NAME]
-GENESET_LABELS = ['HI80', 'CGD AD', 'ConsangBP' 'HI20', 'CGD AR', 'Lethal AR']
+GENESET_LABELS = ['HI80', 'CGD AD', 'ConsangBP', 'HI20', 'CGD AR', 'Lethal AR']
 GENESET_LABELS_MAPPING = dict(zip(GENESETS, GENESET_LABELS))
 GENESET_LABELS_MAPPING[None] = "all"
 GENESETS_DICT = {}
@@ -340,8 +340,9 @@ def make_heatmap_geneset_sim(likelihood, ref, sim, s, h, func, geneset, quality,
         histogram = get_null_histogram()
     with np.errstate(divide="ignore", invalid="ignore"):
         frac = histogram / np.nansum(histogram)
-    return heatmap_figure({'histogram': histogram,
-                           "frac": frac})
+    return (np.nansum(histogram), 
+            heatmap_figure({'histogram': histogram,
+                           "frac": frac}))
 
 
 def make_plot_empirical(likelihood, demography, func, genelist, quality, min_L, max_L, z_variable="histogram", heatmap=True):
