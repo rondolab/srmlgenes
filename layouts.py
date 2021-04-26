@@ -5,6 +5,7 @@ import os.path
 
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 import dash_daq as daq
 import numpy as np
 from dash import callback_context, no_update
@@ -146,6 +147,7 @@ class SimsTab(GeneSelectControls):
         self.h_slider = self.make_component(dcc.Slider, "h-slider", min=0, max=3,
                            marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
                            disabled=True, value=3)
+        self.h_tooltip = self.make_component(html.Div, "h-tooltip")
         self.s_slider = self.make_component(dcc.Slider, "s-slider", min=0, max=4,
                            marks={0: 'Neutral', 1: '-10⁻⁴', 2: '-10⁻³', 3: '-10⁻²', 4: '-10⁻¹'},
                            value=0)
@@ -176,7 +178,8 @@ class SimsTab(GeneSelectControls):
                            Input(self.length_select_mode.id, 'value'),
                            Input(self.genes_store.id, 'data')])
         self.tag_callback(self.enable_disable_h_slider,
-                          Output(self.h_slider.id, 'disabled'),
+                          [Output(self.h_slider.id, 'disabled'),
+                           Output(self.h_tooltip.id, 'children')],
                           [Input(self.s_slider.id, 'value')])
         self.tag_callback(self.switch_L_selection_visibility,
                           [Output(self.length_select_single_div.id, 'hidden'),
@@ -191,7 +194,7 @@ class SimsTab(GeneSelectControls):
                         html.Div(children=[
                             self.caption,
                             dcc.Markdown("*Adjust the controls below to change these values.*"),
-                            html.Label("h"), self.h_slider,
+                            html.Label("h"), self.h_slider, self.h_tooltip,
                             html.Br(),
                             html.Label("s"), self.s_slider,
                             html.Br(),
@@ -249,7 +252,10 @@ class SimsTab(GeneSelectControls):
             raise ValueError(f"Unknown L selection mode {L_mode}")
 
     def enable_disable_h_slider(self, s_slider_value):
-        return s_slider_value == 0
+        if s_slider_value == 0:
+            return True, dbc.Tooltip("choose a non-neutral s to set h", target=self.h_slider.id)
+        else:
+            return False, [] 
 
     def switch_L_selection_visibility(self, mode):
         if mode == "empirical":
@@ -273,6 +279,7 @@ class ExacTab(GeneSelectControls):
                                 {'label': 'Enrichment (log odds ratio)', 'value': 'odds_ratio'},
                                 {'label': 'Enrichment (p-value)', 'value': 'p_value'}],
                        value='histogram')
+        self.color_scheme_tooltip = self.make_component(html.Div, "color-scheme-tooltip")
         self.caption = self.make_component(dcc.Markdown, 'caption', "**Loading...**")
         self.heatmap = self.make_component(dcc.Graph, 'heatmap')
         self.tag_callback(self.update_heatmap,
@@ -287,7 +294,8 @@ class ExacTab(GeneSelectControls):
                            Input(self.genes_store.id, 'data')])
         self.tag_callback(self.enable_disable_color_select,
                           [Output(self.color_scheme_buttons.id, "options"),
-                           Output(self.color_scheme_buttons.id, "value")],
+                           Output(self.color_scheme_buttons.id, "value"),
+                           Output(self.color_scheme_tooltip.id, "children")],
                           [Input(self.geneset_dropdown.id, "value"),
                            Input(self.quality_dropdown.id, "value")],
                           [State(self.color_scheme_buttons.id, "options")])
@@ -299,7 +307,7 @@ class ExacTab(GeneSelectControls):
         return html.Div([html.Div([self.caption,
                                 dcc.Markdown("*Adjust the controls below to change these values.*"),
                                 html.Label("Values to Plot"),
-                                self.color_scheme_buttons] +
+                                self.color_scheme_buttons, self.color_scheme_tooltip] +
                                 self.render_gene_select_sublayout() +
                                 [self.heatmap_mode_switch],
                                 style={'width': '30%',
@@ -351,11 +359,11 @@ class ExacTab(GeneSelectControls):
             for option in options:
                 if option["value"] != "histogram":
                     option["disabled"] = True
-            return options, "histogram"
+            return options, "histogram", dbc.Tooltip("select a gene list to plot enrichment", target=self.color_scheme_buttons.id)
         else:
             for option in options:
                 option["disabled"] = False
-            return options, no_update
+            return options, no_update, []
 
     def do_toggle(self, switch_state):
         if switch_state:
