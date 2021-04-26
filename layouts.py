@@ -133,8 +133,8 @@ class GeneSelectControls(DashLayout):
     def render_layout(self):
         return self.render_gene_select_sublayout()
 
-simulation_caption_template = "**Histogram** of maximum likelihood values observed in each of the 17 selection and dominance classes, " \
-                   "shown for **simulated** genes with {selection}."
+simulation_caption_template = "Histogram of maximum likelihood values observed in 17 selection and dominance classes, " \
+                   "shown for **simulated** genes with **{selection}**."
 single_sim_length_template = " Showing all simulations with length  = **{length}** sites (N = **10000**)."
 empirical_sim_length_template = " Showing randomly selected simulations matching the distribution of mutational target sizes of " \
         " **{func}** sites in **{geneset}** genes, restricted to **{L_range}** sites (N = **{N_sims:.0f}**)."
@@ -218,9 +218,9 @@ class SimsTab(GeneSelectControls):
     def update_heatmap(self, h_idx, s_idx, func, geneset, quality, L_boundaries, single_L, L_mode, custom_genelist):
         if s_idx == 0:
             h_idx = 3
-            selection_string = "s=**0**"
+            selection_string = "s=0"
         else:
-            selection_string = f"s=**{S_LABELS[s_idx]}** and h=**{H_VALUES[h_idx]}**"
+            selection_string = f"s={S_LABELS[s_idx]} and h={H_VALUES[h_idx]}"
         caption = simulation_caption_template.format(selection=selection_string)
         if L_mode == "single":
             return (make_heatmap_single_sim("prf", "supertennessen", "supertennessen", S_VALUES[s_idx],
@@ -266,8 +266,8 @@ class SimsTab(GeneSelectControls):
             raise ValueError(f"Unrecognized L selection mode {mode}")
 
 
-exac_histogram_template = "**Histogram** of maximum likelihood values observed in **{classes}** selection and dominance classes for **{geneset}** genes. Showing **{func}** sites only, restricted to mutational target sizes between **{L_range}** sites (N = **{N_genes:.0f}**)."
-exac_enrichment_template = "**{statistic}** for enrichment of maximum likelihood values observed in **{classes}** selection and dominance classes for **{geneset}** genes vs. the genome wide value, using only **{func}** sites. Restricted to mutational target sizes between **{L_range}** sites (N = **{N_genes:.0f}**)."
+exac_histogram_template = "**Histogram** of maximum likelihood values observed in **{classes}** selection and dominance classes, shown for **ExAC** genes in the **{geneset}** list. Showing **{func}** sites only, restricted to mutational target sizes between **{L_range}** sites (N = **{N_genes:.0f}**)."
+exac_enrichment_template = "**{statistic}** for enrichment of maximum likelihood values observed in **{classes}** selection and dominance classes for **{geneset}** genes vs. the genome-wide background, using only **{func}** sites. Restricted to mutational target sizes between **{L_range}** sites (N = **{N_genes:.0f}**)."
 
 
 class ExacTab(GeneSelectControls):
@@ -343,7 +343,7 @@ class ExacTab(GeneSelectControls):
             func_label = "synonymous"
         L_range_text = f"{10**Ls[0]:.0f}-{10**Ls[1]:.0f}"
         if heatmap_mode:
-            classes = "each of the 17"
+            classes = "17"
         else:
             classes = "strong additive and strong recessive"
         n_genes, heatmap_fig = make_plot_empirical("prf", "supertennessen", func, geneset, quality, Ls[0], Ls[1], z_variable, heatmap_mode)
