@@ -350,7 +350,7 @@ class ExacTab(GeneSelectControls):
         if z_variable == "histogram":
             caption = exac_histogram_template.format(classes=classes, func=func_label, geneset=geneset_name, L_range=L_range_text, N_genes=n_genes)
         else:
-            caption = exac_enrichment_template.format(statistic="Log odds ratios" if z_variable=="odds_ratio" else "Chi-squared p-values", classes=classes, func=func_label, geneset=geneset_name, L_range=L_range_text, N_genes=n_genes)
+            caption = exac_enrichment_template.format(statistic="Log odds ratios" if z_variable=="odds_ratio" else "Log10 chi-squared p-values", classes=classes, func=func_label, geneset=geneset_name, L_range=L_range_text, N_genes=n_genes)
         return heatmap_fig, caption
 
 
