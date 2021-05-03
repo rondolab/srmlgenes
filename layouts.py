@@ -383,9 +383,9 @@ class TwoTabLayout(DashLayout):
         self.modal = self.make_component(dbc.Modal, "modal", children=[
             dbc.ModalHeader("Welcome to srMLGenes"),
             dbc.ModalBody(dcc.Markdown('''This web tool lets you explore inferences of dominance and selection
-        and gene enrichments in different categories using the srML method from Balick, Jordan, and Do 2021. 
+        and gene enrichments in different categories using the srML method from Balick, Jordan, Sunyaev, and Do 2021. 
         Click the "Simulated Genes" tab to explore simulated genes, or the "ExAC Genes" tab to explore 
-        real human genes observed in ExAC.
+        real human genes observed in sequenced exomes from the Exome Aggregation Consortium (ExAC).
         
 For more information, see [our preprint on bioRxiv](https://www.biorxiv.org/).''')),
             dbc.ModalFooter(self.modal_close_button)],
