@@ -21,4 +21,4 @@ application = app.server
 
 if __name__ == "__main__":
     app.config.update(requests_pathname_prefix="/")
-    app.run_server(debug=True)
+    app.run_server()
