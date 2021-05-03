@@ -376,12 +376,27 @@ class TwoTabLayout(DashLayout):
         super().__init__()
         self.sims_tab = SimsTab()
         self.exac_tab = ExacTab()
+
+        self.modal_close_button = self.make_component(dbc.Button,
+                                                      "modal-close-button")
+        self.modal = self.make_component(dbc.Modal, "modal", children=[
+            dbc.ModalHeader("Welcome to srMLGenes"),
+            dbc.ModalBody('''This web tool lets you explore inferences of dominance and selection
+        and gene enrichments in different categories using the srML method from Balick, Jordan, and Do 2021. 
+        Click the "Simulated Genes" tab to explore simulated genes, or the "ExAC Genes" tab to explore 
+        real human genes observed in ExAC.
+
+        For more information, see the paper.'''),
+            dbc.ModalFooter(self.modal_close_button)],
+                                         size="lg", is_open=True)
+
         self.tabs = self.make_component(dcc.Tabs, "tabs", value="sims",
                 children=[
                     dcc.Tab(label="Simulated Genes", value='sims',
-                            children=self.sims_tab.render_layout()),
+                            children=[self.modal, self.sims_tab.render_layout()]),
                     dcc.Tab(label="ExAC Genes", value='exac',
                             children=self.exac_tab.render_layout())])
+
 
         self.tag_callback(self.transfer_gene_select_params_callback("sims"),
                           [Output(self.sims_tab.func_dropdown.id, "value"),
@@ -453,4 +468,3 @@ class TwoTabLayout(DashLayout):
                     upload_filename if upload_label else no_update,
                     {"is_loading": True} )
         return transfer_gene_select_params
-
