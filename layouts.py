@@ -378,15 +378,16 @@ class TwoTabLayout(DashLayout):
         self.exac_tab = ExacTab()
 
         self.modal_close_button = self.make_component(dbc.Button,
-                                                      "modal-close-button")
+                                                      "modal-close-button",
+                                                      "Get Started")
         self.modal = self.make_component(dbc.Modal, "modal", children=[
             dbc.ModalHeader("Welcome to srMLGenes"),
-            dbc.ModalBody('''This web tool lets you explore inferences of dominance and selection
+            dbc.ModalBody(dcc.Markdown('''This web tool lets you explore inferences of dominance and selection
         and gene enrichments in different categories using the srML method from Balick, Jordan, and Do 2021. 
         Click the "Simulated Genes" tab to explore simulated genes, or the "ExAC Genes" tab to explore 
         real human genes observed in ExAC.
-
-        For more information, see the paper.'''),
+        
+        For more information, see [our preprint on bioRxiv](https://www.biorxiv.org/).'''))
             dbc.ModalFooter(self.modal_close_button)],
                                          size="lg", is_open=True)
 
@@ -442,6 +443,9 @@ class TwoTabLayout(DashLayout):
                            State(self.sims_tab.genes_textbox_label.id, "children"),
                            State(self.sims_tab.genes_upload_label.id, "children")])
 
+        self.tag_callback(self.close_modal_window,
+                          Output(self.modal.is_visible),
+                          [Input(self.modal_close_button, "n_clicks")])
 
 
     def render_layout(self):
@@ -468,3 +472,10 @@ class TwoTabLayout(DashLayout):
                     upload_filename if upload_label else no_update,
                     {"is_loading": True} )
         return transfer_gene_select_params
+
+    @staticmethod
+    def close_modal_window(clicks):
+        if clicks:
+            return False
+        else:
+            return no_update
