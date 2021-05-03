@@ -387,7 +387,7 @@ class TwoTabLayout(DashLayout):
         Click the "Simulated Genes" tab to explore simulated genes, or the "ExAC Genes" tab to explore 
         real human genes observed in ExAC.
         
-        For more information, see [our preprint on bioRxiv](https://www.biorxiv.org/).'''))
+For more information, see [our preprint on bioRxiv](https://www.biorxiv.org/).''')),
             dbc.ModalFooter(self.modal_close_button)],
                                          size="lg", is_open=True)
 
@@ -444,8 +444,8 @@ class TwoTabLayout(DashLayout):
                            State(self.sims_tab.genes_upload_label.id, "children")])
 
         self.tag_callback(self.close_modal_window,
-                          Output(self.modal.is_visible),
-                          [Input(self.modal_close_button, "n_clicks")])
+                          Output(self.modal.id, "is_open"),
+                          [Input(self.modal_close_button.id, "n_clicks")])
 
 
     def render_layout(self):
