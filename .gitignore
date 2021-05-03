@@ -3,4 +3,4 @@ __pycache__/
 *.pyo
 *.swp
 *.log
-dominance_data/
+venv/

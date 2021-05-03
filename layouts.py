@@ -376,12 +376,28 @@ class TwoTabLayout(DashLayout):
         super().__init__()
         self.sims_tab = SimsTab()
         self.exac_tab = ExacTab()
+
+        self.modal_close_button = self.make_component(dbc.Button,
+                                                      "modal-close-button",
+                                                      "Get Started")
+        self.modal = self.make_component(dbc.Modal, "modal", children=[
+            dbc.ModalHeader("Welcome to srMLGenes"),
+            dbc.ModalBody(dcc.Markdown('''This web tool lets you explore inferences of dominance and selection
+        and gene enrichments in different categories using the srML method from Balick, Jordan, Sunyaev, and Do 2021. 
+        Click the "Simulated Genes" tab to explore simulated genes, or the "ExAC Genes" tab to explore 
+        real human genes observed in sequenced exomes from the Exome Aggregation Consortium (ExAC).
+        
+For more information, see [our preprint on bioRxiv](https://www.biorxiv.org/).''')),
+            dbc.ModalFooter(self.modal_close_button)],
+                                         size="lg", is_open=True)
+
         self.tabs = self.make_component(dcc.Tabs, "tabs", value="sims",
                 children=[
                     dcc.Tab(label="Simulated Genes", value='sims',
-                            children=self.sims_tab.render_layout()),
+                            children=[self.modal, self.sims_tab.render_layout()]),
                     dcc.Tab(label="ExAC Genes", value='exac',
                             children=self.exac_tab.render_layout())])
+
 
         self.tag_callback(self.transfer_gene_select_params_callback("sims"),
                           [Output(self.sims_tab.func_dropdown.id, "value"),
@@ -427,6 +443,9 @@ class TwoTabLayout(DashLayout):
                            State(self.sims_tab.genes_textbox_label.id, "children"),
                            State(self.sims_tab.genes_upload_label.id, "children")])
 
+        self.tag_callback(self.close_modal_window,
+                          Output(self.modal.id, "is_open"),
+                          [Input(self.modal_close_button.id, "n_clicks")])
 
 
     def render_layout(self):
@@ -454,3 +473,9 @@ class TwoTabLayout(DashLayout):
                     {"is_loading": True} )
         return transfer_gene_select_params
 
+    @staticmethod
+    def close_modal_window(clicks):
+        if clicks:
+            return False
+        else:
+            return no_update
