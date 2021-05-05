@@ -20,5 +20,5 @@ application = app.server
 
 
 if __name__ == "__main__":
-    app.config.update(requests_pathname_prefix="/")
+#    app.config.update(requests_pathname_prefix="/")
     app.run_server()
