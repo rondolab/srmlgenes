@@ -51,7 +51,7 @@ class GeneSelectControls(DashLayout):
         super().__init__(*args, **kwargs)
         self.geneset_dropdown = self.make_component(dcc.Dropdown, "geneset-dropdown",
                                                     options=[{'label': 'Upload custom list', 'value': 'custom'},
-                                                             {'label': 'ConsangBP', 'value': 'inbred_ALL'},
+                                                             {'label': 'ConsangBP', 'value': 'ConsangBP'},
                                                              {'label': 'HI80', 'value': 'haplo_Hurles_80'},
                                                              {'label': 'HI20', 'value': 'haplo_Hurles_low20'},
                                                              {'label': 'CGD AR', 'value': 'CGD_AR_2020'},
