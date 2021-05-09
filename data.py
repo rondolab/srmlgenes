@@ -14,7 +14,7 @@ SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "sims",
 
 LIKELIHOOD_FILE = "ExAC_63K_prf_supertennessen_inference.tsv"
 HIQUAL_GENESET_NAME = "clinvar_atleast2_2plus"
-GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'inbred_ALL', 'haplo_Hurles_low20', 'CGD_AR_2020', "Molly_recessive_lethal",
+GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'ConsangBP', 'haplo_Hurles_low20', 'CGD_AR_2020', "Molly_recessive_lethal",
             HIQUAL_GENESET_NAME]
 GENESET_LABELS = ['HI80', 'CGD AD', 'ConsangBP', 'HI20', 'CGD AR', 'Lethal AR']
 GENESET_LABELS_MAPPING = dict(zip(GENESETS, GENESET_LABELS))
