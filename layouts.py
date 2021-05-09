@@ -387,7 +387,7 @@ class TwoTabLayout(DashLayout):
         Click the "Simulated Genes" tab to explore simulated genes, or the "ExAC Genes" tab to explore 
         real human genes observed in sequenced exomes from the Exome Aggregation Consortium (ExAC).
         
-For more information, see [our preprint on bioRxiv](https://www.biorxiv.org/).''')),
+For more information, see [our preprint on bioRxiv](https://doi.org/10.1101/2021.05.06.443024).''')),
             dbc.ModalFooter(self.modal_close_button)],
                                          size="lg", is_open=True)
 
