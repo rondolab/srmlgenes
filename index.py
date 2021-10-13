@@ -1,3 +1,8 @@
+import logging
+logging.basicConfig(level="DEBUG")
+
+logging.debug("This is a debug message from the web app")
+
 import os
 import sys
 
@@ -10,15 +15,16 @@ import dash_core_components as dcc
 
 from myapp import create_app
 from layouts import TwoTabLayout
+logging.debug("Succesffully loaded layouts")
 
 app = create_app(__name__, __file__, development_mode=("dev" in __file__))
+logging.debug("Succesffully created app")
 
 layout_obj = TwoTabLayout()
 layout_obj.attach_to_app(app)
+logging.debug("Succesffully attached layout to app")
 
 application = app.server
 
-
-if __name__ == "__main__":
-#    app.config.update(requests_pathname_prefix="/")
-    app.run_server()
+logging.debug("Running server...")
+app.run_server()
