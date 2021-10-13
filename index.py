@@ -22,7 +22,7 @@ logging.debug("Succesffully created app")
 
 layout_obj = TwoTabLayout()
 layout_obj.attach_to_app(app)
-logging.debug("Succesffully attached layout to app")
+logging.debug("Succesfully attached layout to app")
 
 application = app.server
 

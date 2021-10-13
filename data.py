@@ -104,7 +104,7 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
             logging.debug(f"loading {l:0.1f}")
             sim_data = SIM_DATA[f'/s={s}/h={h}/log_L={l:0.1f}']
             sim_data_np = np.empty(sim_data.shape, dtype='float64')
-            sim_data.read_direct(sim_data_np, np.s_[0:count])
+            sim_data.read_direct(sim_data_np)
             df = pd.DataFrame(sim_data_np, columns=SIM_LABEL_ORDER)
             df = df.sample(count, replace=True)
             sims_to_concat.append(df)

@@ -20,7 +20,6 @@ def create_app(app_name, app_filename, development_mode=False):
         return response
 
     server.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
-    app = dash.Dash(__name__, server=server, external_stylesheets=external_stylesheets,
-                    requests_pathname_prefix=quote(str(app_url) + "/"))
+    app = dash.Dash(__name__, server=server, external_stylesheets=external_stylesheets)
     app.title = "srMLGenes"
     return app
