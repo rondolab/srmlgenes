@@ -6,6 +6,6 @@ ADD assets ./
 ADD environment.yml ./
 
 RUN conda env create -f environment.yml
-RUN conda activate srmlgenes
 
-CMD gunicorn index
+ENTRYPOINT ["conda", "run", "-n", "srmlgenes"]
+CMD ["gunicorn", "index"]
