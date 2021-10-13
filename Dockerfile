@@ -8,4 +8,4 @@ ADD environment.yml ./
 RUN conda env create -f environment.yml
 
 ENTRYPOINT ["conda", "run", "-n", "srmlgenes"]
-CMD ["gunicorn", "index"]
+CMD ["gunicorn", "index:application"]

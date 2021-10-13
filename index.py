@@ -26,5 +26,5 @@ logging.debug("Succesffully attached layout to app")
 
 application = app.server
 
-logging.debug("Running server...")
-app.run_server()
+#logging.debug("Running server...")
+#app.run_server()
