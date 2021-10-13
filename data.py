@@ -31,9 +31,9 @@ SIM_LABEL_ORDER = ['NEUTRAL_0.5', '-4.0_0.0', '-3.0_0.0', '-2.0_0.0', '-1.0_0.0'
 
 LIKELIHOOD_FILENAME = "ExAC_63K.supertennessen.inference.tsv"
 HIQUAL_GENESET_NAME = "clinvar_atleast2_2plus"
-GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'ConsangBP', 'haplo_Hurles_low20', 'CGD_AR_2020', "Molly_recessive_lethal",
+GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'DDG2P_AD_all', 'ConsangBP', 'haplo_Hurles_low20', 'CGD_AR_2020', 'DDG2P_AR_all', "Molly_recessive_lethal", 'CGD_AR_2020_pediatric_immune',
             HIQUAL_GENESET_NAME]
-GENESET_LABELS = ['HI80', 'CGD AD', 'ConsangBP', 'HI20', 'CGD AR', 'Lethal AR']
+GENESET_LABELS = ['HI80', 'CGD AD', 'DDG2P AD' 'ConsangBP', 'HI20', 'CGD AR', 'DDG2P AR', 'Lethal AR', 'Pediatric Immune AR']
 GENESET_LABELS_MAPPING = dict(zip(GENESETS, GENESET_LABELS))
 GENESET_LABELS_MAPPING[None] = "all"
 GENESETS_DICT = {}
