@@ -11,7 +11,10 @@ import mpmath
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "dominance_data")
 SIM_DATA = h5py.File("https://srmlgenes-data.s3.amazonaws.com/prf_uniform_epsilon_1.0_ref_supertennessen_sims_supertennessen_inference.h5",
-                     driver='ros3')
+                     driver='ros3',
+                     aws_region=os.environb[b'AWS_REGION'],
+                     secret_id=os.environb[b'AWS_ACCESS_KEY_ID'],
+                     secret_key=os.environb[b'AWS_SECRET_ACCESS_KEY'])
 SIM_LABEL_ORDER = ['NEUTRAL_0.5', '-4.0_0.0', '-3.0_0.0', '-2.0_0.0', '-1.0_0.0',
                    '-4.0_0.1', '-3.0_0.1', '-2.0_0.1', '-1.0_0.1', '-4.0_0.3',
                    '-3.0_0.3', '-2.0_0.3', '-1.0_0.3', '-4.0_0.5', '-3.0_0.5',
