@@ -4,15 +4,19 @@ from functools import lru_cache, wraps
 
 import numpy as np
 import pandas as pd
+import h5py
 from plotly import graph_objects as go
 import plotly.express as px
 import mpmath
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "dominance_data")
-SIM_DATA_TEMPLATE = os.path.join(BASE_DIR, "sims",
-                                 "{likelihood}_ref_{ref}_sims_{sim}_S_{s}_h_{h}_L_{L:.1f}.tsv")
+SIM_DATA = h5py.File(os.path.join(BASE_DIR, "prf_uniform_epsilon_1.0_ref_supertennessen_sims_supertennessen_inference.h5"))
+SIM_LABEL_ORDER = ['NEUTRAL_0.5', '-4.0_0.0', '-3.0_0.0', '-2.0_0.0', '-1.0_0.0',
+                   '-4.0_0.1', '-3.0_0.1', '-2.0_0.1', '-1.0_0.1', '-4.0_0.3',
+                   '-3.0_0.3', '-2.0_0.3', '-1.0_0.3', '-4.0_0.5', '-3.0_0.5',
+                   '-2.0_0.5', '-1.0_0.5']
 
-LIKELIHOOD_FILE = "ExAC_63K_prf_supertennessen_inference.tsv"
+LIKELIHOOD_FILE = "ExAC_63K.supertennessen.inference.tsv"
 HIQUAL_GENESET_NAME = "clinvar_atleast2_2plus"
 GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'ConsangBP', 'haplo_Hurles_low20', 'CGD_AR_2020', "Molly_recessive_lethal",
             HIQUAL_GENESET_NAME]
@@ -42,7 +46,7 @@ except FileNotFoundError:
 
 
 def extract_histogram_sims(df):
-    ml_bin_names = df.transpose().drop("L").idxmax()
+    ml_bin_names = df.transpose().idxmax()
     split_names = ml_bin_names.str.split("_")
     ml_s = split_names.str.get(0)
     ml_h = split_names.str.get(1)
@@ -79,23 +83,24 @@ def tuplify_args(f):
 @tuplify_args
 @lru_cache(maxsize=None)
 def load_sim_data(likelihood, ref, sim, s, h, L):
+    if likelihood != 'prf' or ref != "supertennessen" or sim != "supertennessen":
+        raise ValueError("non-PRF and non-supertennessen currently not implemented")
     if isinstance(L, tuple):
         L = pd.Series(L)
         sims_to_concat = []
         for l, count in L.round(1).value_counts().iteritems():
-            sims_to_concat.append(pd.read_table(SIM_DATA_TEMPLATE.format(likelihood=likelihood,
-                                                                         ref=ref,
-                                                                         sim=sim,
-                                                                         s=s,
-                                                                         h=h,
-                                                                         L=l),
-                                                nrows=count))
+            sim_data = SIM_DATA[f'/s={s}/h={h}/log_L={l:0.1f}']
+            sim_data_np = np.empty(sim_data.shape, dtype='float64')
+            sim_data.read_direct(sim_data_np, np.s_[0:count])
+            df = pd.DataFrame(sim_data_np, columns=SIM_LABEL_ORDER)
+            df = df.sample(count, replace=True)
+            sims_to_concat.append(df)
         df = pd.concat(sims_to_concat, ignore_index=True)
     else:
-        df = pd.read_table(SIM_DATA_TEMPLATE.format(likelihood=likelihood,
-                                                    ref=ref,
-                                                    sim=sim,
-                                                    s=s, h=h, L=L))
+        sim_data = SIM_DATA[f'/s={s}/h={h}/log_L={L:0.1f}']
+        sim_data_np = np.empty(sim_data.shape, dtype='float64')
+        sim_data.read_direct(sim_data_np)
+        df = pd.DataFrame(sim_data_np, columns=SIM_LABEL_ORDER)
     return extract_histogram_sims(df)
 
 
