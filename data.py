@@ -11,7 +11,7 @@ import mpmath
 
 import logging
 
-logging.basicConfig("DEBUG")
+logging.basicConfig(level="DEBUG")
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "dominance_data")
 logging.debug("opening h5 file")
