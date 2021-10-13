@@ -1,10 +1,10 @@
 import os
 import sys
 
-app_dir = os.path.dirname(__file__)
-virtualenv_activate_script = os.path.join(app_dir, "venv", "bin", "activate_this.py")
-exec(open(virtualenv_activate_script).read(), {'__file__': virtualenv_activate_script})
-sys.path.append(app_dir)
+#app_dir = os.path.dirname(__file__)
+#virtualenv_activate_script = os.path.join(app_dir, "venv", "bin", "activate_this.py")
+#exec(open(virtualenv_activate_script).read(), {'__file__': virtualenv_activate_script})
+#sys.path.append(app_dir)
 
 import dash_core_components as dcc
 
