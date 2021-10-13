@@ -1,11 +1,12 @@
-FROM continuumio/miniconda3
+FROM mambaorg/micromamba
+
+COPY --chown=micromamba:micromamba environment.yml /tmp/environment.yml
+
+RUN micromamba install -y -n base -f /tmp/environment.yml && \
+    micromamba clean --all --yes
 
 WORKDIR /app
 ADD *.py  ./
 ADD assets ./
-ADD environment.yml ./
 
-RUN conda env create -f environment.yml
-
-ENTRYPOINT ["conda", "run", "-n", "srmlgenes"]
 CMD ["gunicorn", "index:application"]
