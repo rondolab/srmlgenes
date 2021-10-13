@@ -9,12 +9,18 @@ from plotly import graph_objects as go
 import plotly.express as px
 import mpmath
 
+import logging
+
+logging.basicConfig("DEBUG")
+
 BASE_DIR = os.path.join(os.path.dirname(__file__), "dominance_data")
+logging.debug("opening h5 file")
 SIM_DATA = h5py.File("https://srmlgenes-data.s3.amazonaws.com/prf_uniform_epsilon_1.0_ref_supertennessen_sims_supertennessen_inference.h5",
                      driver='ros3',
                      aws_region=os.environb[b'AWS_REGION'],
                      secret_id=os.environb[b'AWS_ACCESS_KEY_ID'],
                      secret_key=os.environb[b'AWS_SECRET_ACCESS_KEY'])
+logging.debug("done")
 SIM_LABEL_ORDER = ['NEUTRAL_0.5', '-4.0_0.0', '-3.0_0.0', '-2.0_0.0', '-1.0_0.0',
                    '-4.0_0.1', '-3.0_0.1', '-2.0_0.1', '-1.0_0.1', '-4.0_0.3',
                    '-3.0_0.3', '-2.0_0.3', '-1.0_0.3', '-4.0_0.5', '-3.0_0.5',
@@ -28,7 +34,6 @@ GENESET_LABELS = ['HI80', 'CGD AD', 'ConsangBP', 'HI20', 'CGD AR', 'Lethal AR']
 GENESET_LABELS_MAPPING = dict(zip(GENESETS, GENESET_LABELS))
 GENESET_LABELS_MAPPING[None] = "all"
 GENESETS_DICT = {}
-
 
 class DataFileWarning(UserWarning):
     pass
@@ -50,6 +55,7 @@ except FileNotFoundError:
 
 
 def extract_histogram_sims(df):
+    logging.debug("calculating histogram")
     ml_bin_names = df.transpose().idxmax()
     split_names = ml_bin_names.str.split("_")
     ml_s = split_names.str.get(0)
@@ -60,6 +66,7 @@ def extract_histogram_sims(df):
                           .astype(float).values
     for h_index in 0, 1, 2:
         counts_grid[h_index, 0] = np.nan
+    logging.debug("finished calculating histogram")
     return counts_grid
 
 
@@ -90,9 +97,11 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
     if likelihood != 'prf' or ref != "supertennessen" or sim != "supertennessen":
         raise ValueError("non-PRF and non-supertennessen currently not implemented")
     if isinstance(L, tuple):
+        logging.debug(f"loading sim data for L series at {s}/{h}")
         L = pd.Series(L)
         sims_to_concat = []
         for l, count in L.round(1).value_counts().iteritems():
+            logging.debug(f"loading {l:0.1f}")
             sim_data = SIM_DATA[f'/s={s}/h={h}/log_L={l:0.1f}']
             sim_data_np = np.empty(sim_data.shape, dtype='float64')
             sim_data.read_direct(sim_data_np, np.s_[0:count])
@@ -101,10 +110,12 @@ def load_sim_data(likelihood, ref, sim, s, h, L):
             sims_to_concat.append(df)
         df = pd.concat(sims_to_concat, ignore_index=True)
     else:
+        logging.debug(f"loading sim data for {s}/{h}/{L:0.1f}")
         sim_data = SIM_DATA[f'/s={s}/h={h}/log_L={L:0.1f}']
         sim_data_np = np.empty(sim_data.shape, dtype='float64')
         sim_data.read_direct(sim_data_np)
         df = pd.DataFrame(sim_data_np, columns=SIM_LABEL_ORDER)
+    logging.debug("loaded")
     return extract_histogram_sims(df)
 
 
