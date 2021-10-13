@@ -1,0 +1,16 @@
+name: srmlgenes
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - numpy
+  - pandas
+  - h5py
+  - plotly
+  - flask
+  - mpmath
+  - dash-core-components
+  - dash-html-components
+  - dash-bootstrap-components
+  - dash-daq
+  - gunicorn
