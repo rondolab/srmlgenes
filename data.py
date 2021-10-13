@@ -14,10 +14,13 @@ import logging
 logging.basicConfig(level="DEBUG")
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "dominance_data")
+
+S3_DATA_BUCKET = os.environ["S3_DATA_BUCKET"]
+
 logging.debug("opening h5 file")
-SIM_DATA = h5py.File("https://srmlgenes-data.s3.amazonaws.com/prf_uniform_epsilon_1.0_ref_supertennessen_sims_supertennessen_inference.h5",
+SIM_DATA = h5py.File(f"https://{S3_DATA_BUCKET}.s3.amazonaws.com/prf_uniform_epsilon_1.0_ref_supertennessen_sims_supertennessen_inference.h5",
                      driver='ros3',
-                     aws_region=os.environb[b'AWS_REGION'],
+                     aws_region=os.environb[b'AWS_DEFAULT_REGION'],
                      secret_id=os.environb[b'AWS_ACCESS_KEY_ID'],
                      secret_key=os.environb[b'AWS_SECRET_ACCESS_KEY'])
 logging.debug("done")
@@ -26,7 +29,7 @@ SIM_LABEL_ORDER = ['NEUTRAL_0.5', '-4.0_0.0', '-3.0_0.0', '-2.0_0.0', '-1.0_0.0'
                    '-3.0_0.3', '-2.0_0.3', '-1.0_0.3', '-4.0_0.5', '-3.0_0.5',
                    '-2.0_0.5', '-1.0_0.5']
 
-LIKELIHOOD_FILE = "ExAC_63K.supertennessen.inference.tsv"
+LIKELIHOOD_FILENAME = "ExAC_63K.supertennessen.inference.tsv"
 HIQUAL_GENESET_NAME = "clinvar_atleast2_2plus"
 GENESETS = ['haplo_Hurles_80', 'CGD_AD_2020', 'ConsangBP', 'haplo_Hurles_low20', 'CGD_AR_2020', "Molly_recessive_lethal",
             HIQUAL_GENESET_NAME]
@@ -38,20 +41,14 @@ GENESETS_DICT = {}
 class DataFileWarning(UserWarning):
     pass
 
-
-geneset_base_dir = os.path.join(BASE_DIR, "genesets")
-
-try:
-    for geneset_name in GENESETS:
-        filename = os.path.join(geneset_base_dir, geneset_name + '.tsv')
-        geneset = set()
-        with open(filename) as list_file:
-            for gene in list_file:
-                if gene.strip() != "gene":
-                    geneset.add(gene.strip())
-        GENESETS_DICT[geneset_name] = geneset
-except FileNotFoundError:
-    warnings.warn(f"Gene list files not found (looking in {geneset_base_dir})", DataFileWarning)
+#try:
+for geneset_name in GENESETS:
+    filename = f"s3://{S3_DATA_BUCKET}/genesets/{geneset_name}.tsv"
+    genes = pd.read_table(filename, squeeze=True)
+    geneset = set(genes)
+    GENESETS_DICT[geneset_name] = geneset
+#except FileNotFoundError:
+#    warnings.warn(f"Gene list files not found (looking in {geneset_base_dir})", DataFileWarning)
 
 
 def extract_histogram_sims(df):
@@ -251,7 +248,7 @@ enrichment: %{{customdata[2]:0.2f}} (p-value = %{{customdata[3]:0.2g}}) <extra><
 
 @lru_cache(maxsize=None)
 def load_unfiltered_df(likelihood, demography):
-    filename = os.path.join(BASE_DIR, LIKELIHOOD_FILE)
+    filename = f"s3://{S3_DATA_BUCKET}/{LIKELIHOOD_FILENAME}"
     return pd.read_table(filename)
 
 

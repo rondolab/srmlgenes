@@ -13,4 +13,6 @@ dependencies:
   - dash-html-components
   - dash-bootstrap-components
   - dash-daq
+  - fsspec
+  - s3fs
   - gunicorn
