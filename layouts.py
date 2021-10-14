@@ -56,7 +56,10 @@ class GeneSelectControls(DashLayout):
                                                              {'label': 'HI20', 'value': 'haplo_Hurles_low20'},
                                                              {'label': 'CGD AR', 'value': 'CGD_AR_2020'},
                                                              {'label': 'CGD AD', 'value': 'CGD_AD_2020'},
-                                                             {'label': 'Lethal AR', 'value': 'Molly_recessive_lethal'}],
+                                                             {'label': 'DDG2P AR', 'value': 'DDG2P_AR_all'},
+                                                             {'label': 'DDG2P AD', 'value': 'DDG2P_AD_all'},
+                                                             {'label': 'Lethal AR', 'value': 'Molly_recessive_lethal'},
+                                                             {'label': 'CGD_AR_2020_pediatric_immune', 'value': 'Pediatric Immune AR'}],
                                                     placeholder="Select a gene list")
         self.quality_dropdown = self.make_component(dcc.Dropdown, "quality-dropdown",
                                                     options=[{'label': 'ClinVar High Quality', 'value': 'high'},

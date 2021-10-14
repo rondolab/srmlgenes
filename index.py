@@ -1,5 +1,4 @@
 import logging
-logging.basicConfig(level="DEBUG")
 
 logging.debug("This is a debug message from the web app")
 
