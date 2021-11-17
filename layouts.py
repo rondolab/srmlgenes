@@ -239,7 +239,8 @@ class SimsTab(GeneSelectControls):
                 else:
                     raise PreventUpdate
             else:
-                geneset_name = GENESET_LABELS_MAPPING[geneset]
+                #geneset_name = GENESET_LABELS_MAPPING[geneset]
+                geneset_name = geneset
             if quality == "high":
                 geneset_name += " HQ"
             elif quality == "low":
