@@ -370,9 +370,9 @@ class ExacTab(GeneSelectControls):
 
     def do_toggle(self, switch_state):
         if switch_state:
-            return "Showing all h,s values"
+            return "All h,s values"
         else:
-            return "Showing srML test (strong selection only)"
+            return "srML test (strong selection only)"
 
 class TwoTabLayout(DashLayout):
     def __init__(self):
@@ -394,7 +394,7 @@ For more information, see [the paper](https://doi.org/10.1101/2021.05.06.443024)
             dbc.ModalFooter(self.modal_close_button)],
                                          size="lg", is_open=True)
 
-        self.tabs = self.make_component(dcc.Tabs, "tabs", value="sims",
+        self.tabs = self.make_component(dcc.Tabs, "tabs", value="exac",
                 children=[
                     dcc.Tab(label="ExAC Genes", value='exac',
                             children=self.exac_tab.render_layout()),
