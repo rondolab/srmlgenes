@@ -397,9 +397,9 @@ For more information, see [the paper](https://doi.org/10.1101/2021.05.06.443024)
         self.tabs = self.make_component(dcc.Tabs, "tabs", value="exac",
                 children=[
                     dcc.Tab(label="ExAC Genes", value='exac',
-                            children=self.exac_tab.render_layout()),
+                            children=[self.modal, self.exac_tab.render_layout()]),
                     dcc.Tab(label="Simulated Genes", value='sims',
-                            children=[self.modal, self.sims_tab.render_layout()])
+                            children=self.sims_tab.render_layout())
                 ])
 
 
