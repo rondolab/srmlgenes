@@ -66,7 +66,7 @@ class GeneSelectControls(DashLayout):
                                                              {'label': 'ClinVar Low Quality', 'value': 'low'}],
                                                     placeholder="Select a quality filter")
         self.genes_textbox = self.make_component(dcc.Textarea, "genes-textbox")
-        self.genes_update_button = self.make_component(html.Button, "update-button", "Update", n_clicks=0, disabled=True)
+        self.genes_update_button = self.make_component(html.Button, "update-button", "Update", n_clicks=0)
         self.genes_textbox_label = self.make_component(html.Label, "textbox-genes-label")
         self.genes_upload = self.make_component(dcc.Upload, 'genes-upload', children=[html.Button("Select file")])
         self.genes_upload_label = self.make_component(html.Label, "upload-genes-label")
@@ -91,7 +91,7 @@ class GeneSelectControls(DashLayout):
         self.tag_callback(self.switch_custom_selection_visibility,
                           Output(self.custom_select_div.id, "hidden"),
                           [Input(self.geneset_dropdown.id, "value")])
-        self.tag_callback(self.enable_custom_update_button,
+        self.tag_callback(self.update_custom_genes,
                           [Output(self.genes_store.id, "data"),
                            Output(self.genes_textbox_label.id, "children"),
                            Output(self.genes_upload_label.id, "children")],
@@ -99,11 +99,6 @@ class GeneSelectControls(DashLayout):
                            Input(self.genes_upload.id, "contents"),
                            Input(self.genes_upload.id, "filename")],
                           [State(self.genes_textbox.id, "value")])
-        self.tag_callback(self.update_custom_genes,
-                          [Output(self.genes_update_button.id, "disabled")],
-                          [Input(self.genes_update_button.id, "n_clicks"),
-                           Input(self.genes_textbox.id, "value"),
-                           Input(self.genes_upload.id, "contents")])
 
     def render_gene_select_sublayout(self):
         return [
@@ -117,17 +112,6 @@ class GeneSelectControls(DashLayout):
     @staticmethod
     def switch_custom_selection_visibility(geneset):
         return geneset != "custom"
-
-    def enable_custom_update_button(self, button_clicks, textbox_value, upload_contents):
-        # update button enables on edit text or upload new file if text box is not empty
-        # disables on click update
-        triggered_prop = callback_context.triggered[0]['prop_id']
-        if triggered_prop == f"{self.genes_textbox.id}.value" or triggered_prop == f"{self.genes_upload.id}.contents":
-            return textbox_value == ""
-        elif triggered_prop == f"{self.genes_update_button.id}.n_clicks":
-            return True
-        else:
-            return no_update
 
     def update_custom_genes(self, button_clicks, upload_data, upload_filename, textbox_value):
         triggered_prop = callback_context.triggered[0]['prop_id']
