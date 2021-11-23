@@ -149,11 +149,11 @@ class SimsTab(GeneSelectControls):
         self.caption = self.make_component(dcc.Markdown, 'caption', "**Loading...**")
         self.h_slider = self.make_component(dcc.Slider, "h-slider", min=0, max=3,
                            marks={0: '0.0', 1: '0.1', 2: '0.3', 3: '0.5'},
-                           disabled=True, value=3)
+                           value=0)
         self.h_tooltip = self.make_component(html.Div, "h-tooltip")
         self.s_slider = self.make_component(dcc.Slider, "s-slider", min=0, max=4,
                            marks={0: 'Neutral', 1: '-10⁻⁴', 2: '-10⁻³', 3: '-10⁻²', 4: '-10⁻¹'},
-                           value=0)
+                           value=4)
         self.length_select_mode = self.make_component(dcc.RadioItems, "L-select-mode",
                                                       options=[{'label': "Empirical length profile",
                                                                 'value': 'empirical'},
