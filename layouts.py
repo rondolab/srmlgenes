@@ -276,7 +276,7 @@ exac_enrichment_template = "**{statistic}** for enrichment of maximum likelihood
 class ExacTab(GeneSelectControls):
     def __init__(self):
         super().__init__(id_suffix="-exac")
-        self.heatmap_mode_switch = self.make_component(daq.ToggleSwitch, "heatmap-switch", value=True)
+        self.heatmap_mode_switch = self.make_component(daq.ToggleSwitch, "heatmap-switch", value=False)
         self.color_scheme_buttons = self.make_component(dcc.RadioItems, "color-buttons",
                        options=[{'label': 'Histogram', 'value': 'histogram'},
                                 {'label': 'Enrichment (log odds ratio)', 'value': 'odds_ratio'},
@@ -310,9 +310,9 @@ class ExacTab(GeneSelectControls):
         return html.Div([html.Div([self.caption,
                                 dcc.Markdown("*Adjust the controls below to change these values.*"),
                                 html.Label("Values to Plot"),
+                                self.heatmap_mode_switch,
                                 self.color_scheme_buttons, self.color_scheme_tooltip] +
-                                self.render_gene_select_sublayout() +
-                                [self.heatmap_mode_switch],
+                                self.render_gene_select_sublayout(),
                                 style={'width': '30%',
                                         'margin-left': '5%',
                                         'margin-right': '5%',
@@ -370,9 +370,9 @@ class ExacTab(GeneSelectControls):
 
     def do_toggle(self, switch_state):
         if switch_state:
-            return "Showing all selection classes"
+            return "Showing all h,s values"
         else:
-            return "Showing only strong selection"
+            return "Showing srML test (strong selection only)"
 
 class TwoTabLayout(DashLayout):
     def __init__(self):
@@ -390,16 +390,17 @@ class TwoTabLayout(DashLayout):
         Click the "Simulated Genes" tab to explore simulated genes, or the "ExAC Genes" tab to explore 
         real human genes observed in sequenced exomes from the Exome Aggregation Consortium (ExAC).
         
-For more information, see [our preprint on bioRxiv](https://doi.org/10.1101/2021.05.06.443024).''')),
+For more information, see [the paper](https://doi.org/10.1101/2021.05.06.443024).''')),
             dbc.ModalFooter(self.modal_close_button)],
                                          size="lg", is_open=True)
 
         self.tabs = self.make_component(dcc.Tabs, "tabs", value="sims",
                 children=[
-                    dcc.Tab(label="Simulated Genes", value='sims',
-                            children=[self.modal, self.sims_tab.render_layout()]),
                     dcc.Tab(label="ExAC Genes", value='exac',
-                            children=self.exac_tab.render_layout())])
+                            children=self.exac_tab.render_layout()),
+                    dcc.Tab(label="Simulated Genes", value='sims',
+                            children=[self.modal, self.sims_tab.render_layout()])
+                ])
 
 
         self.tag_callback(self.transfer_gene_select_params_callback("sims"),
